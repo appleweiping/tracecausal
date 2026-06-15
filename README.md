@@ -57,8 +57,9 @@ paper evidence.
 
 ## Current Status
 
-This is the initial research scaffold. Server experiments are deliberately not
-run from this local setup. The next real stage is design review of the formal
-experiment plan, followed by server-side trace extraction only after the plan
-passes ARIS gates.
-
+The non-server initialization package is complete for handoff: see
+`docs/active_todo.md`, `docs/milestones.md`, `docs/paper_claims_status.md`,
+and `docs/definition_of_done.md`. Server experiments are deliberately not run
+from this local setup. The next real stage is ARIS experiment-plan review of
+the formal trace extraction and intervention protocol, followed by server-side
+trace extraction only after the plan passes the documented gates.

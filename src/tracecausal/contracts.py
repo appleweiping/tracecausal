@@ -27,6 +27,15 @@ TRACECAUSAL_CONTRACT = ProjectContract(
         "docs/experiment_protocol.md",
         "docs/baseline_contract.md",
         "docs/claim_evidence_matrix.md",
+        "docs/paper_claims_status.md",
+        "docs/idea_synthesis.md",
+        "docs/research_plan.md",
+        "docs/active_todo.md",
+        "docs/milestones.md",
+        "docs/data_and_evaluation_plan.md",
+        "docs/motivation_ablation_hparam_plan.md",
+        "docs/risks_and_blockers.md",
+        "docs/definition_of_done.md",
         "docs/aris_research_refine_audit.md",
         "docs/server_runbook.md",
     ),
@@ -56,4 +65,3 @@ def validate_manifest(manifest: dict[str, Any]) -> list[str]:
 
 def required_paths(root: Path) -> list[Path]:
     return [root / item for item in TRACECAUSAL_CONTRACT.required_docs]
-
