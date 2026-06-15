@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TraceCausal trace manifest",
+  "type": "object",
+  "required": [
+    "project",
+    "dataset_id",
+    "model_id",
+    "split",
+    "split_hash",
+    "trace_steps",
+    "trace_segments",
+    "candidate_segments",
+    "seed",
+    "server_authorized"
+  ],
+  "properties": {
+    "project": {"type": "string", "const": "tracecausal"},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "model_id": {"type": "string", "minLength": 1},
+    "split": {"type": "string", "enum": ["train", "valid", "test", "diagnostic"]},
+    "split_hash": {"type": "string", "minLength": 8},
+    "seed": {"type": "integer", "minimum": 0},
+    "server_authorized": {"type": "boolean", "const": false},
+    "trace_steps": {"type": "array", "minItems": 1},
+    "trace_segments": {"type": "array", "minItems": 1},
+    "candidate_segments": {"type": "array", "minItems": 1}
+  }
+}

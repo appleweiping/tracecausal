@@ -1,0 +1,19 @@
+project: tracecausal
+run_tier: first_gate
+buffer_percent: 30
+resources:
+  trace_extraction_gpu_hours: 8
+  intervention_gpu_hours: 6
+  baseline_gpu_hours: 8
+  storage_gb: 300
+  wall_clock_hours: 48
+preflight_required:
+  - gpu_available
+  - output_dir_empty_or_resumable
+  - disk_free_gb_at_least_390
+  - compact_sync_path_ready
+stop_conditions:
+  - causal_margin_below_0_05
+  - utility_drop_above_0_02
+  - storage_budget_exceeded
+

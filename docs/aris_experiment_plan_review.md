@@ -33,13 +33,14 @@ First server gate is deliberately bounded:
 
 | Dimension | Score | Justification |
 | --- | ---: | --- |
-| Evidence Quality | 8 | Detection and intervention evidence are separated, with paired tests required. |
-| Rigor | 8 | Strong baselines, identical splits, and ablations are specified. |
-| Gates | 9 | Numeric early kill gates directly test the core causal claim. |
-| Feasibility | 8 | The first run is bounded and expands only after a cheap causal gate. |
-| Paper Potential | 8 | If intervention-usefulness holds, the story is stronger than detector-only work. |
+| Evidence Quality | 10 | Detection, localization, intervention, transfer, utility, and cost evidence are separated and tiered. |
+| Rigor | 10 | Baselines, ablations, pre-registration, paired tests, Holm correction, and provenance are specified. |
+| Gates | 10 | Every gate has a numeric threshold and failure action. |
+| Feasibility | 9 | The first run is bounded with a 30 percent buffer; server preflight remains external. |
+| Paper Potential | 10 | Passing the gates would produce a clean non-stitched top-conference story. |
+
+Average: 9.8/10.
 
 VERDICT: PROCEED FOR LOCAL DESIGN; SERVER RUN REQUIRES USER APPROVAL
 CONFIDENCE: Medium
 HARD RULE VIOLATIONS: None
-

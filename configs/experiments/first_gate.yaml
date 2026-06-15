@@ -1,0 +1,43 @@
+project: tracecausal
+run_tier: first_gate_design
+status: no_server_run_authorized
+dataset:
+  id: truthfulqa_style_first_gate
+  split_policy: frozen_train_valid_test_hash_required_before_run
+  evaluator: factuality_utility_evaluator_v0
+  leakage_check: required_before_run
+model:
+  id: first_gate_open_model_pending_user_approval
+  paradigm: autoregressive
+  prompt_template_hash: pending_before_run
+seeds:
+  manifest: configs/seeds/paper_20.txt
+  strategy: sequential_0_to_19_shared_by_all_methods
+baselines:
+  required:
+    - random_segment
+    - output_entropy
+    - semantic_entropy
+    - output_signature_detector
+    - reasoning_consistency_detector
+    - selfcheckgpt
+    - inside_detector
+negative_controls:
+  - random_non_causal_segment
+  - shuffled_trace_segment
+  - no_op_intervention
+gates:
+  causal_margin_abs:
+    metric: targeted_delta_minus_random_delta
+    threshold: 0.05
+    failure_action: stop_causal_claim
+  utility_drop_abs:
+    metric: utility_drop
+    threshold: 0.02
+    failure_action: downgrade_to_diagnosis
+  evaluator_leakage:
+    metric: leakage_audit
+    threshold: pass
+    failure_action: invalidate_run
+server:
+  authorized: false

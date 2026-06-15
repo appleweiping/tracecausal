@@ -3,19 +3,96 @@ baselines:
   random_segment:
     family: sanity
     required: true
+    paper_url: local_sanity_baseline
+    implementation_source: local
+    implementation_commit: same_repo
+    license: project_license
+    tuning_grid: none
+    input_access: trace_steps_only_for_random_sampling
+    fairness: same_split_same_examples_same_evaluator
   output_entropy:
     family: output_uncertainty
     required: true
+    paper_url: foundational_uncertainty_baseline_to_verify
+    implementation_source: local
+    implementation_commit: same_repo
+    license: project_license
+    tuning_grid: threshold_on_validation_only
+    input_access: output_probabilities
+    fairness: same_split_same_examples_same_evaluator
   semantic_entropy:
+    display_name: Semantic Entropy
     family: sampling_uncertainty
     required: true
+    paper_url: https://www.nature.com/articles/s41586-024-07421-0
+    implementation_source: official_or_faithful_reimplementation_required
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    tuning_grid: sample_budget_and_cluster_threshold_validation_only
+    input_access: sampled_outputs
+    fairness: same_split_same_examples_same_evaluator
   output_signature_detector:
     family: learned_output_signature
     required: true
+    paper_url: supplied_los_net_bundle_verify_before_citation
+    implementation_source: official_or_faithful_reimplementation_required
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    tuning_grid: validation_only_detector_hparams
+    input_access: output_probability_signature
+    fairness: same_split_same_examples_same_evaluator
   reasoning_consistency_detector:
+    display_name: RACE
     family: reasoning_trace
     required: true
+    paper_url: https://arxiv.org/abs/2506.04832
+    implementation_source: official_or_faithful_reimplementation_required
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    tuning_grid: validation_only_signal_weights
+    input_access: reasoning_traces
+    fairness: same_split_same_examples_same_evaluator
   diffusion_trace_detector:
+    display_name: TraceDet
     family: diffusion_trace
     required: true
-
+    paper_url: https://arxiv.org/abs/2510.01274
+    implementation_source: official_or_faithful_reimplementation_required
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    tuning_grid: validation_only_subtrace_selection
+    input_access: diffusion_denoising_trace
+    fairness: same_split_same_examples_same_evaluator
+  tdgnet_trace_detector:
+    display_name: TDGNet
+    family: diffusion_trace
+    required: true
+    paper_url: https://arxiv.org/abs/2602.08048
+    implementation_source: official_or_faithful_reimplementation_required
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    tuning_grid: validation_only_graph_hparams
+    input_access: diffusion_trace_graph
+    fairness: same_split_same_examples_same_evaluator
+  selfcheckgpt:
+    display_name: SelfCheckGPT
+    family: sampling_consistency
+    required: true
+    paper_url: https://arxiv.org/abs/2303.08896
+    implementation_source: official_or_faithful_reimplementation_required
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    tuning_grid: validation_only_nli_threshold
+    input_access: sampled_outputs
+    fairness: same_split_same_examples_same_evaluator
+  inside_detector:
+    display_name: INSIDE
+    family: internal_state_uncertainty
+    required: true
+    paper_url: https://arxiv.org/abs/2402.03744
+    implementation_source: official_or_faithful_reimplementation_required
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    tuning_grid: validation_only_internal_signal_threshold
+    input_access: hidden_states_if_available
+    fairness: same_split_same_examples_same_evaluator

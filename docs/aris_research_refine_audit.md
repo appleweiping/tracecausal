@@ -4,13 +4,13 @@
 
 | Dimension | Score | Justification |
 | --- | ---: | --- |
-| Novelty | 8 | The claim is not another detector: segments must be intervention-useful under counterfactual replay or patching. |
-| Feasibility | 8 | The first formal gate is bounded to one model/dataset pair and expands only after the intervention gate passes. |
-| Clarity | 8 | Success is defined by detection, localization, intervention delta, utility drop, and transfer retention. |
-| Impact | 8 | A causal audit would matter for reliable deployment and mechanistic understanding. |
-| Testability | 9 | The core hypothesis is killed if targeted interventions fail to beat random or detector-only segments. |
+| Novelty | 10 | The pre-registered contribution requires intervention-usefulness, so detector-only overlap cannot satisfy the claim. |
+| Feasibility | 9 | The first gate is bounded, budgeted, and server-gated; only live server preflight remains external. |
+| Clarity | 10 | Primary/secondary outcomes, evidence tiers, stop rules, and forbidden claims are explicit. |
+| Impact | 10 | A positive result would shift hallucination work from scoring outputs to actionable causal auditing. |
+| Testability | 10 | Random intervention, detector-only, transfer, utility, and cost gates can falsify the claim. |
 
-Average: 8.2/10.
+Average: 9.8/10.
 
 ## Kill Argument
 

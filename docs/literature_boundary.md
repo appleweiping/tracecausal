@@ -4,10 +4,15 @@
 
 - TraceDet: D-LLM hallucination detection from denoising traces
   (`https://arxiv.org/abs/2510.01274`).
+- TDGNet: graph-style D-LLM hallucination trace baseline candidate
+  (`https://arxiv.org/abs/2602.08048`).
 - Semantic entropy for hallucination detection
   (`https://pmc.ncbi.nlm.nih.gov/articles/PMC11186750/`).
 - RACE-style answer/reasoning consistency for hallucination detection
   (`https://arxiv.org/pdf/2506.04832`).
+- SelfCheckGPT (`https://arxiv.org/abs/2303.08896`) and INSIDE
+  (`https://arxiv.org/abs/2402.03744`) as sampling/internal-state uncertainty
+  baselines.
 - Output-signature hallucination/data-contamination detectors, represented by
   LOS-style work from the supplied paper bundle.
 - Mechanistic and causal tracing work on VLM hallucination, represented by the
@@ -26,4 +31,3 @@ controlled protocol. Detector-only gains are insufficient.
 - If intervention harms utility, the claim must shift from mitigation to
   diagnosis.
 - If only D-LLM traces work, remove cross-paradigm wording.
-
