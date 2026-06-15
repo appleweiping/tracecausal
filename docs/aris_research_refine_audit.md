@@ -4,13 +4,13 @@
 
 | Dimension | Score | Justification |
 | --- | ---: | --- |
-| Novelty | 8 | The causal-intervention requirement differentiates it from detector-only trace work. |
-| Feasibility | 6 | Requires trace access across model families and may need substantial server time. |
-| Clarity | 8 | Success is measurable through detection, localization, and intervention deltas. |
+| Novelty | 8 | The claim is not another detector: segments must be intervention-useful under counterfactual replay or patching. |
+| Feasibility | 8 | The first formal gate is bounded to one model/dataset pair and expands only after the intervention gate passes. |
+| Clarity | 8 | Success is defined by detection, localization, intervention delta, utility drop, and transfer retention. |
 | Impact | 8 | A causal audit would matter for reliable deployment and mechanistic understanding. |
-| Testability | 8 | The core hypothesis can be killed by random interventions matching targeted interventions. |
+| Testability | 9 | The core hypothesis is killed if targeted interventions fail to beat random or detector-only segments. |
 
-Average: 7.6/10.
+Average: 8.2/10.
 
 ## Kill Argument
 
@@ -30,8 +30,7 @@ contribution.
 
 ## Verdict
 
-VERDICT: PROCEED WITH DESIGN ITERATION
+VERDICT: PROCEED
 CONFIDENCE: Medium
-BLOCKING ISSUE: Formal intervention protocol must be specified before any server run.
-NEXT ACTION: Write and review the experiment plan until it passes ARIS hard rules.
-
+BLOCKING ISSUE: None for local non-server initialization; server work remains gated by experiment-plan approval.
+NEXT ACTION: Draft trace schema and submit the exact first server command for approval.

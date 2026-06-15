@@ -1,0 +1,32 @@
+{
+  "project": "tracecausal",
+  "status": "design_only_no_data",
+  "schema_version": "0.1.0",
+  "record_types": {
+    "TraceStep": {
+      "required": ["step_id", "paradigm", "text_span", "score"],
+      "paradigm_values": ["autoregressive", "reasoning_trace", "diffusion_lm"],
+      "score_range": [0.0, 1.0]
+    },
+    "TraceSegment": {
+      "required": ["segment_id", "step_ids", "selector", "score", "intervention"],
+      "score_range": [0.0, 1.0]
+    },
+    "TraceManifest": {
+      "required": [
+        "project",
+        "dataset_id",
+        "model_id",
+        "split",
+        "trace_steps",
+        "candidate_segments",
+        "seed",
+        "server_authorized"
+      ],
+      "server_authorized": false
+    }
+  },
+  "paper_evidence_status": "not_evidence",
+  "next_validation_command": "python scripts\\validate_project.py; python -m pytest -q"
+}
+

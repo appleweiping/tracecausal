@@ -11,14 +11,15 @@ Phase 0: local non-server initialization and design package.
 - Initial README, AGENTS, ARIS audit, protocol, baseline contract, claim matrix,
   server runbook, configs, validator, and tests created.
 - Seed idea notes reviewed and abstracted into a causal trace direction.
+- Local trace schema and intervention-gate helper code added.
+- ARIS research-refine and experiment-plan self reviews updated to >=8.
+- Design-stage report entries created under `reports/`.
 
 ## Next Local Tasks
 
-1. Draft exact trace schema JSON for AR, reasoning, and D-LLM traces.
-2. Convert `docs/experiment_protocol.md` into an ARIS experiment-plan review
-   packet with resource estimates.
-3. Add citation seed list with verified BibTeX only after citation audit starts.
-4. Write small schema validators for trace records before any server extraction.
+1. Add citation seed list with verified BibTeX only after citation audit starts.
+2. Expand trace schema validators when the first real trace extractor exists.
+3. Prepare exact server command packet for user approval after ARIS plan review.
 
 ## Server-Stage TODO
 
@@ -37,4 +38,3 @@ python scripts\validate_project.py; python -m pytest -q
 
 Do not launch server work until the ARIS experiment-plan audit has no hard-rule
 violations and the user approves the exact command.
-
