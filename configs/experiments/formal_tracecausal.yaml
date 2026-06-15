@@ -1,0 +1,39 @@
+project: tracecausal
+status: design_only
+run_tier: paper_candidate
+claim: causal process segments are intervention-useful for hallucination auditing
+datasets:
+  - truthfulqa_style
+  - hotpotqa_style
+  - haleval_style
+  - diffusion_lm_trace_style
+model_families:
+  - autoregressive_llm
+  - reasoning_trace_lrm
+  - diffusion_llm
+baselines:
+  - random_segment
+  - output_entropy
+  - semantic_entropy
+  - output_signature_detector
+  - reasoning_consistency_detector
+  - diffusion_trace_detector
+seeds:
+  paper_minimum: 20
+metrics:
+  detection:
+    - auroc
+    - auprc
+    - fpr_at_95_tpr
+  intervention:
+    - factuality_delta
+    - answer_accuracy_delta
+    - utility_delta
+gates:
+  random_intervention_margin_abs: 0.05
+  max_utility_drop_abs: 0.02
+  heldout_taxonomy_retention: 0.80
+server:
+  authorized: false
+  reason: design review not complete
+

@@ -1,0 +1,21 @@
+project: tracecausal
+baselines:
+  random_segment:
+    family: sanity
+    required: true
+  output_entropy:
+    family: output_uncertainty
+    required: true
+  semantic_entropy:
+    family: sampling_uncertainty
+    required: true
+  output_signature_detector:
+    family: learned_output_signature
+    required: true
+  reasoning_consistency_detector:
+    family: reasoning_trace
+    required: true
+  diffusion_trace_detector:
+    family: diffusion_trace
+    required: true
+

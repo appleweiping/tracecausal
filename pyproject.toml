@@ -1,0 +1,10 @@
+[project]
+name = "tracecausal"
+version = "0.1.0"
+description = "Causal propagation auditing for hallucination traces across LLM decoding paradigms."
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
