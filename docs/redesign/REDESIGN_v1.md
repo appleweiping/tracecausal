@@ -13,7 +13,8 @@ drop `0.02`, transfer retention `0.80`, seeds `>= 20`); this redesign does not
 weaken any gate, it only sharpens the estimator they are applied to.
 
 Naming note. The deliverable brief inherits a generic clause requiring a
-"propriety PROOF for riskcal". `tracecausal` has no module named `riskcal`. The
+proper-scoring propriety obligation. `tracecausal` has no proper-scoring-reward
+module. The
 load-bearing object that the clause maps onto here is the **causal-usefulness
 estimator** `\hat U` (the targeted-minus-random factuality contrast that gates
 every causal claim, implemented today as `passes_intervention_gate`). Section 2.5

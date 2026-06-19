@@ -38,17 +38,12 @@ def build_parser():
 
 
 def _heavy(args, plan):
-    from tracecausal import (  # noqa: F401
-        axis_x_confounded, negative_control_collinear, source_swap,
-    )
-    # The authorized run sweeps xi over the regimes and records the P5 readout. The
-    # kernels themselves are deterministic pure-Python fixtures (already unit
-    # tested); the do-not-run packet defers the actual sweep + artifact emission to
-    # the authorized build-out.
-    raise NotImplementedError(
-        "authorized Axis X' sweep calls axis_x_confounded over (xi, regime), then "
-        "negative_control_collinear (NC-1) and source_swap (NC-2), and records P5"
-    )
+    # Fully-implemented authorized run: the Axis X' structural fixtures are frozen
+    # pure-Python (no lead data, no model, no GPU), so the authorized sweep executes
+    # them directly and records the registered P5 readout + the R4 soundness verdict.
+    # Reachable only after the §1 authorization flip (server.authorized + the flag).
+    from _runners import run_adversarial_oracle as _run  # lazy
+    return _run(args, plan)
 
 
 def main(argv=None) -> int:

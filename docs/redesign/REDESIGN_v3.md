@@ -22,13 +22,13 @@ a **floor**. v3 *adds* power-derived requirements on top of that floor and
 *tightens* the causal interpretation; it relaxes nothing.
 
 **Naming note (carried, unchanged in substance from v1/v2).** The deliverable
-brief inherits a generic clause requiring a "propriety PROOF for riskcal".
-`tracecausal` has no module named `riskcal`. The load-bearing object the clause
+brief inherits a generic clause requiring a proper-scoring propriety obligation.
+`tracecausal` has no proper-scoring-reward module. The load-bearing object the clause
 maps onto here is the **causal-usefulness estimator** `\hat U`. v1 over-claimed a
 non-gameability theorem; v2 correctly retreated to an *unbiased-matched-contrast*
 Identification Lemma; **v3 keeps that retreat but (a) de-circularizes the lemma
 with per-example notation, (b) removes the logically invalid G5, and (c) adds a
-genuinely propriety-flavoured mechanism check** for the `riskcal` analogue, namely
+genuinely propriety-flavoured mechanism check** for the proper-scoring analogue, namely
 the **strictly-proper Bregman/Savage scoring rule** `G_B(p)=1-p+p^2 ⇒
 S(p,y)=1-(p-y)^2`, whose stationary point is `p=q` — verified below as *formula
 evaluation, not evidence* and used only to justify that the evaluator's
@@ -55,7 +55,7 @@ contrast* retreat from v1's theorem) are **preserved**.
 | **D — `mask` operator under-specified; attention-zeroing ≠ "removing evidence"; no SHAM/OOD control; no answer-adjacent control.** | **§2.2 rewritten operationally** (exact KV/attention/logit behaviour, position-id and RMS-renorm handling). Adds a **SHAM-MASK control** (mask a provably-irrelevant span / do-nothing renormalisation) and an **answer-adjacent-span control**, so a "necessity" signal cannot be an OOD or positional artifact. | §2.2, §2.3, §4 G8 |
 | **E — Statistical plan conflates examples/seeds/intervention-repeats/bootstrap; Holm family omits G2/G5/best-baseline; `sigma_u=0.35` placeholder; binary-Y attenuation; ~10³/cell vs budget unreconciled.** | **§4.5 rewritten.** Four sampling levels separated with named symbols; Holm family redefined to include G1,G2,G5′,G6,G7 + best-baseline contrasts; `sigma_u` placeholder replaced by a **bounded-Bernoulli-contrast variance formula** with a pre-registered validation-split re-estimation rule; the `(2κ−1)` attenuation band is computed and the gate target is **raised to keep 0.05/0.03 detectable at κ≥0.90**, with a widen-or-aggregate fallback below that; the `~10³/cell` count is **reconciled against `docs/compute_budget.md`** with an explicit GPU-hour line and a feasible cell count (the "lead shrinks" escape hatch is replaced by a concrete budget table). | §4.5 |
 | **F — CIU contract not implemented; run-readiness over-claimed.** | **§5 specifies the full Phase-2 contract** (`CIURecord`, `validate_ciu_record`, `ciu_gate`, `baseline_readiness`, null-pool sampler, adapter/null-pool/evaluator hashes) **plus a runnable null-data unit harness** proving (i) a random selector ⇒ `\hat U ≈ 0` and (ii) the **revised** novelty gate G5′ fires. AR-LLM stays the frozen lead; reasoning/diffusion stay a transfer study. | §5 |
-| Proper-scoring mechanism for the `riskcal` analogue (reviewer verified the algebra but noted it is "not present in v2"). | **Now present**: §2.0a states and uses the strictly-proper rule `G_B(p)=1-p+p^2 ⇒ S(p,y)=1-(p-y)^2`; §2.11 gives the proof and the `p=q` stationarity, both **formula evaluation, not evidence**. | §2.0a, §2.11 |
+| Proper-scoring mechanism for the proper-scoring analogue (reviewer verified the algebra but noted it is "not present in v2"). | **Now present**: §2.0a states and uses the strictly-proper rule `G_B(p)=1-p+p^2 ⇒ S(p,y)=1-(p-y)^2`; §2.11 gives the proof and the `p=q` stationarity, both **formula evaluation, not evidence**. | §2.0a, §2.11 |
 
 **Net effect on the score-limiting issue.** The reviewer wrote: *"the design
 still has a central logical flaw: G5 treats detector baselines with positive
@@ -135,7 +135,7 @@ testable + positively probed in §2.10). We do **not** claim detectors must scor
 0; whether they do is an empirical, novelty-bearing question. Reasoning-trace and
 diffusion-LM remain a **transfer study** with the identical operator.
 
-### 2.0a The proper-scoring (`riskcal` analogue) mechanism, stated up front
+### 2.0a The proper-scoring analogue mechanism, stated up front
 
 `Y_i \in \{0,1\}` is a factuality label produced by a hashed evaluator. To make
 the evaluator's *probabilistic* report `p` incentive-compatible (no benefit to
@@ -148,7 +148,7 @@ Then (proof and stationarity in §2.11; both **formula evaluation, not evidence*
 ```
 S(p, y) = 1 - (p - y)^2,     argmax_p E_{Y~Bernoulli(q)}[S(p,Y)] = q,  uniquely (G'' = 2 > 0).
 ```
-This is the load-bearing role the brief's "propriety PROOF for riskcal" maps onto:
+This is the load-bearing role the brief's proper-scoring propriety obligation maps onto:
 a **strictly proper scoring rule guarantees the evaluator's elicited factuality
 probability is its true belief**, which is exactly assumption **A3** (evaluator
 pre-commitment) made mechanistically honest. It says nothing about detectors and
@@ -461,7 +461,7 @@ interval* on residual A4★ bias, so A4★ is **supportable within a stated boun
 rather than only falsifiable. (This adds `proximity_bin` to the matching keys of
 `Pi_i`; back-compatible additive field, §5.)
 
-### 2.11 Proper-scoring proof for the `riskcal` analogue (formula evaluation, not evidence)
+### 2.11 Proper-scoring propriety proof (formula evaluation, not evidence)
 
 > **Labelled: closed-form check, not experimental evidence.** Verified by stdlib
 > arithmetic in this session (exact polynomial identity over sampled `p∈[0,1]`,
@@ -716,7 +716,7 @@ GPU-hour line and pick a **feasible cell count**:
   Stage-1 registered report requires pre-data.
 
 (Quadrature/closed-form note: the `n` table (E3), the attenuation band (E4), and
-the riskcal identity (§2.11) were checked numerically in-session and are labelled
+the proper-scoring identity (§2.11) were checked numerically in-session and are labelled
 **formula evaluation, not evidence**.)
 
 ---

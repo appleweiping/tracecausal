@@ -673,12 +673,12 @@ readiness still depends on the consolidated harness staying green** (the §11 ga
 rule), and no experiment has been run — every empirical result slot remains
 `DATA_NEEDED` and `server.authorized: false` is preserved.
 
-> **Note on the orchestration template's `neurotrace-it` clause.** The dispatching
+> **Note on the orchestration template's sibling-project clause.** The dispatching
 > script's generic instruction names a `layer_function.py` (layer-routing) and
-> `cost_model.py` (cost model) that "must" appear *for neurotrace-it*. **tracecausal
+> `cost_model.py` (cost model) that "must" appear *for a different sibling project*. **tracecausal
 > is a different project** and the task scope is explicitly "work only on
 > tracecausal; never touch the others." tracecausal has **no** layer-routing surface
-> and **no** `neurotrace-it` module namespace (verified: `src/tracecausal/` contains
+> and **no** sibling-project module namespace (verified: `src/tracecausal/` contains
 > `ciu/nuisance/oracle_gen/nullpool/interventions/...`, none layer-routing).
 > Forcing those two files into tracecausal would be fabricating an irrelevant
 > surface and would couple two projects the constraint forbids coupling. They are
@@ -687,7 +687,7 @@ rule), and no experiment has been run — every empirical result slot remains
 > *parameter* of the repair policy — `L_patch` in `repair_ops.localized_repair`,
 > §9 below — and the compute accounting the `cost_model` would do is already the
 > `forwards_per_example` surcharge in `nuisance.r_power_repair` (§6.3). If the
-> orchestrator intends these for neurotrace-it, they belong in that repo, not this
+> orchestrator intends these for that sibling project, they belong in that repo, not this
 > one.
 
 **New modules**

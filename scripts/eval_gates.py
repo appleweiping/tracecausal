@@ -126,19 +126,18 @@ def _reconcile(args) -> int:
 
 
 def _heavy(args, plan):
+    # Authorized run: both sub-modes are pure-CPU over on-disk artifacts (no model, no
+    # GPU). estimate_nuisance wires the V_inf nuisance estimators; eval_gates ENFORCES
+    # the v5 acceptance checks executably -- G9 (Holm/SI-corrected two-way-cluster CI
+    # lower bound > m_R, sign-flip diagnostic p < alpha_1', bounded repair utility,
+    # per-class positivity, no self leakage), m_R attenuation (Eq. m-R), and G9-NOV
+    # (PROPOSED out-transfers max(B1,B2,B3) on the simultaneous lower CI). RunInputError
+    # if the upstream artifacts are absent. Reachable only after the §1 flip.
     if plan["task"] == "estimate_nuisance":
-        from tracecausal import (  # noqa: F401
-            estimate_kappa, estimate_sigma_u, pool_inflation,
-        )
-    else:  # gate evaluation
-        from tracecausal import (  # noqa: F401
-            choose_si_path, ciu_gate, g9_novelty_gate, g9_repair_gate,
-            holm_alpha, validate_ciu_record,
-        )
-    raise NotImplementedError(
-        f"authorized {plan['task']} wires the listed kernels over real artifacts; "
-        "the do-not-run packet does not synthesize run inputs"
-    )
+        from _runners import run_estimate_nuisance as _run
+        return _run(args, plan)
+    from _runners import run_eval_gates as _run
+    return _run(args, plan)
 
 
 def main(argv=None) -> int:

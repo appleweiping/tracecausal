@@ -38,19 +38,14 @@ def build_parser():
 
 
 def _heavy(args, plan):
-    # Lazy imports of GPU deps happen ONLY here, never at module import time.
-    import torch  # noqa: F401
-    import transformers  # noqa: F401
-
-    from tracecausal import validate_trace_manifest  # noqa: F401
-
-    # The actual extraction loop (model load, forwards, span tagging, manifest
-    # emission) is intentionally not implemented in this do-not-run packet; it is
-    # the authorized build-out. This function is unreachable in dry-run.
-    raise NotImplementedError(
-        "authorized extraction loop is the build-out step; the kernel APIs "
-        "(tracecausal.schemas.validate_trace_manifest, .interventions) are ready"
-    )
+    # Authorized run: the extraction loop genuinely needs the user's pinned model on
+    # ${GPU} (pure Python cannot fabricate a forward), so it binds the model through
+    # the ForwardProvider seam and owns the real orchestration (argument resolution,
+    # output dir, the STATUS row). If no provider is configured the runner raises an
+    # actionable ForwardProviderUnavailable (set TRACECAUSAL_FORWARD_PROVIDER), NOT a
+    # blanket NotImplementedError. Reachable only after the §1 authorization flip.
+    from _runners import run_extract_traces as _run  # lazy
+    return _run(args, plan)
 
 
 def main(argv=None) -> int:

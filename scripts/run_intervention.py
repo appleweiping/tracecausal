@@ -44,15 +44,14 @@ def build_parser():
 
 
 def _heavy(args, plan):
-    import torch  # noqa: F401
-    import transformers  # noqa: F401
-
-    from tracecausal import mask, ood_deflation, patch, replay  # noqa: F401
-
-    raise NotImplementedError(
-        "authorized screening loop applies tracecausal.interventions.{mask,patch,replay}, "
-        "scores CIURecord rows, and writes them under --output"
-    )
+    # Authorized run: the screening interventions apply mask/patch/replay forwards on
+    # ${GPU}, so the model is bound through the ForwardProvider seam; this owns the
+    # real orchestration. No forward is fabricated in pure Python; an unconfigured
+    # provider raises an actionable ForwardProviderUnavailable. Post-forward CIURecord
+    # scoring uses the implemented tracecausal.ciu/interventions kernels via the
+    # provider. Reachable only after the §1 authorization flip.
+    from _runners import run_screening_interventions as _run  # lazy
+    return _run(args, plan)
 
 
 def main(argv=None) -> int:

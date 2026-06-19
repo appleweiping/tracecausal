@@ -66,9 +66,9 @@
 }
 
 % TraceDet --- diffusion-LLM hallucination detection from denoising traces.
-% arXiv:2510.01274; published at ICLR 2026. Author list and venue confirmed against
-% the supplied base paper (base_papers/tracecausal/TRACEDET.pdf): the action-trace /
-% information-bottleneck sub-trace detector, average AUROC gain of 15.2%.
+% arXiv:2510.01274; published at ICLR 2026. Author list and venue verifiable from the
+% public arXiv record (id 2510.01274): the action-trace / information-bottleneck
+% sub-trace detector, average AUROC gain of 15.2%.
 % Code: https://github.com/chang-sx/TraceDet
 @inproceedings{tracedet2026diffusion,
   title         = {{TraceDet}: Hallucination Detection from the Decoding Trace of Diffusion Large Language Models},
@@ -82,12 +82,11 @@
 
 % FCCT / IRI --- Fine-grained Cross-modal Causal Tracing + Intervention-time
 % Intermediate Representation Injection, for LVLM object-hallucination mitigation.
-% arXiv:2511.05923; accepted at AAAI-26. Author list, title and venue confirmed
-% against the primary arXiv page (id 2511.05923) and the supplied base paper
-% (base_papers/tracecausal/causal_tracing_lvlm.pdf): Gaussian-perturbation causal
-% tracing that quantifies recovery rate ("recovery in output probability") on a
-% fixed grid of components (MHSA/FFN/hidden) and layers, then a training-free
-% injection (IRI) reinforces the strong-effect sites.
+% arXiv:2511.05923; accepted at AAAI-26. Author list, title and venue verifiable
+% from the public arXiv page (id 2511.05923) and the AAAI-26 proceedings DOI below:
+% Gaussian-perturbation causal tracing that quantifies recovery rate ("recovery in
+% output probability") on a fixed grid of components (MHSA/FFN/hidden) and layers,
+% then a training-free injection (IRI) reinforces the strong-effect sites.
 @inproceedings{li2026fcct,
   title         = {Causal Tracing of Object Representations in Large Vision Language Models: Mechanistic Interpretability and Hallucination Mitigation},
   author        = {Li, Qiming and Ye, Zekai and Feng, Xiaocheng and Zhong, Weihong and Ma, Weitao and Feng, Xiachong},
@@ -106,8 +105,8 @@
 % mitigates logically-inconsistent hallucinations by training LLMs to build/reason
 % over a variable-level DAG. Published at AAAI-26 (proceedings page 31852); extended
 % version arXiv:2508.12495. Author list, venue, dataset (CausalDR, 25,368 samples),
-% and headline numbers (CLADDER 95.33%, HaluEval +10%) confirmed against the supplied
-% base paper (base_papers/tracecausal/mitigating_causal_reasoning.pdf).
+% and headline numbers (CLADDER 95.33%, HaluEval +10%) verifiable from the public
+% arXiv record (id 2508.12495) and the AAAI-26 proceedings DOI below.
 % Code/data: https://github.com/MrLYG/CDCR-SFT
 @inproceedings{li2026cdcrsft,
   title         = {Mitigating Hallucinations in Large Language Models via Causal Reasoning},

@@ -41,16 +41,12 @@ def build_parser():
 
 
 def _heavy(args, plan):
-    from tracecausal import select_binning, validate_selection_split  # noqa: F401
-
-    # The authorized step reads the actual V_sel distances off disk and calls
-    # select_binning(...) + validate_selection_split(...). The do-not-run packet
-    # does not synthesize inputs; this branch is unreachable in dry-run.
-    raise NotImplementedError(
-        "authorized binning reads V_sel distances and calls "
-        "tracecausal.binning_selection.select_binning / "
-        "tracecausal.selective_inference.validate_selection_split"
-    )
+    # Authorized run: read the actual V_sel distances off disk and call the frozen
+    # binning-as-code kernel; emit the Binning + SelectionEvent (k_bin). Pure CPU; it
+    # synthesizes no numbers and raises RunInputError if the V_sel artifact is absent.
+    # Reachable only after the §1 authorization flip.
+    from _runners import run_select_binning as _run  # lazy
+    return _run(args, plan)
 
 
 def main(argv=None) -> int:

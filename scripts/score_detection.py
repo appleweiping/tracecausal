@@ -35,11 +35,12 @@ def build_parser():
 
 
 def _heavy(args, plan):
-    from tracecausal import intervention_effect, passes_intervention_gate  # noqa: F401
-    raise NotImplementedError(
-        "authorized scoring reads intervention/repair rows and computes the "
-        "secondary detection metrics + repair readouts; do-not-run packet defers it"
-    )
+    # Authorized run: pure-CPU SECONDARY scoring over already-collected scored rows
+    # (no model, no GPU). Computes AUROC / AUPRC / FPR@95TPR; RunInputError if the
+    # rows are absent. The headline claim is R_hat/G9 (eval_gates), not these metrics.
+    # Reachable only after the §1 authorization flip.
+    from _runners import run_score_detection as _run  # lazy
+    return _run(args, plan)
 
 
 def main(argv=None) -> int:

@@ -100,9 +100,12 @@ class SigmaREstimate:
         Variance of the **source** first projection ``E[g_{ij} | i]``.
     zeta_01:
         Variance of the **target-margin** first projection ``E[g_{ij} | j]``.
-    zeta_1:
-        ``max(zeta_10, zeta_01)`` — retained for back-reference / reporting only; the
-        variance no longer collapses to it (findings 4, 10).
+    zeta_1_max_reporting_only:
+        ``max(zeta_10, zeta_01)`` — retained for back-reference / reporting ONLY; the
+        variance no longer collapses to it (findings 4, 10). **Never read this as the
+        variance**: it is the superseded symmetric-kernel shorthand's projection scale
+        and is deliberately named to make that misuse loud. The variance uses the
+        two-projection ``proj_var`` (``zeta_10/n_source + zeta_01/n_target``) below.
     n_source / n_target:
         The two cluster-margin counts; the ordered projection variance divides each
         projection by its own margin.
@@ -130,7 +133,9 @@ class SigmaREstimate:
 
     zeta_10: float
     zeta_01: float
-    zeta_1: float
+    # NOT the variance: the superseded symmetric-kernel max(zeta_10, zeta_01) scale,
+    # kept for back-reference/reporting and named to make a misread loud (findings 4, 10).
+    zeta_1_max_reporting_only: float
     n_source: int
     n_target: int
     n_eff: float
@@ -554,7 +559,9 @@ def estimate_sigma_r(
     target_means = [sum(v) / len(v) for v in by_target.values()]
     zeta_10 = _sample_sd(source_means) ** 2
     zeta_01 = _sample_sd(target_means) ** 2
-    zeta_1 = max(zeta_10, zeta_01)  # retained for reporting only (findings 4, 10)
+    # max(zeta_10, zeta_01): reporting/back-reference only, NOT the variance scale
+    # (the variance uses both projections over their own margins; findings 4, 10).
+    zeta_1_max_reporting_only = max(zeta_10, zeta_01)
 
     n_source = len(by_source)
     n_target = len(by_target)
@@ -582,7 +589,7 @@ def estimate_sigma_r(
     return SigmaREstimate(
         zeta_10=zeta_10,
         zeta_01=zeta_01,
-        zeta_1=zeta_1,
+        zeta_1_max_reporting_only=zeta_1_max_reporting_only,
         n_source=n_source,
         n_target=n_target,
         n_eff=n_eff,

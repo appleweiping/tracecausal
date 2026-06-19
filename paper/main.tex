@@ -23,6 +23,10 @@
 \documentclass[11pt]{article}
 
 \usepackage[utf8]{inputenc}
+% Scalable Type1 fonts (lmodern) before fontenc: microtype's font expansion below
+% requires scalable fonts, else pdfTeX aborts with "auto expansion is only possible
+% with scalable fonts" on a bitmap (Type3) default font (reproducibility fix).
+\usepackage{lmodern}
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{booktabs}
@@ -1293,6 +1297,28 @@ We carry the design's caveats forward honestly.
   acceptance risk, not a resolved one: what is falsifiable \emph{now} is the machinery
   (the green do-not-run harness); the causal claim is falsifiable only after the
   authorized run.
+  \item \textbf{Survival is conditional on Registered-Report framing --- a scoping
+  survival, not a strength survival.} This submission pre-concedes every prong of the
+  obvious ``it only measures a self-defined contrast / has no empirical separation from
+  prior work'' objection by scoping itself as a Stage-1 Registered Report: the
+  contribution as written is \emph{the certified estimand, its identification design,
+  and a pre-registered plan}, not a causal finding. That defence holds \emph{only} at a
+  venue that credits the Registered-Report contract. At a venue with no RR track, or
+  before a reviewer who declines to credit a protocol with no empirical separation from
+  prior work yet, the honest reading is a reject, not a borderline accept. We do not
+  claim the design's scoping makes it venue-independent; its survival is contingent on
+  the reviewing frame, and we state that contingency rather than assuming it away.
+  \item \textbf{The conditional novelty is load-bearing and not yet de-risked.} The
+  net-novelty claim (Sec.~\ref{sec:intro}, Sec.~\ref{sec:method:g9}) is explicitly
+  conditional on G9-NOV: PROPOSED must out-transfer the TraceDet-/entropy-/probe-selected
+  spans (B1--B3) through the \emph{identical} repair pipeline. We concede a baseline match
+  is plausible, and we have \emph{not} de-risked it with any pilot or analytic argument
+  that PROPOSED wins --- by construction there is no pre-data evidence. If B1--B3 match
+  PROPOSED, the contribution self-downgrades to ``the matched-null $+$ selective-inference
+  certification protocol'': a real but infrastructure-grade, lateral contribution, not a
+  nine-tier causal discovery. The headline's survival to the run is therefore close to a
+  coin-flip on G9-NOV that this paper does not resolve; we present it as a genuine
+  acceptance risk, not a foregone conclusion.
   \item \textbf{Positivity may be low, and the anchor $T$ is matched on the covariates
   the estimand nets out (self-defined-ruler risk).} A7 is measured and reported;
   classes with excluded-pair fraction $\ge0.5$ are routed to ``insufficient
@@ -1310,12 +1336,33 @@ We carry the design's caveats forward honestly.
   CPU on already-collected $g_{ij}$ with a closed-form H\'ajek cross-check; the
   SI-1/SI-2 path is chosen by a deterministic rule known before lock, so the power
   cost is known, not discovered. $\sR$ is \textsc{data\_needed}, not assumed.
+  \item \textbf{The confirmatory CI carries full weight at an unknown, possibly small
+  cluster count.} Once the class-block sign-flip is correctly demoted to a non-exact
+  diagnostic, \emph{all} confirmatory significance rests on the two-way (source,target)
+  cluster-bootstrap CI lower bound. With only the primary two confirmatory cells (one
+  model $\times$ two datasets) and source/target cluster counts $n_{\mathrm{source}}$,
+  $n_{\mathrm{target}}$ that are \textsc{data\_needed} until the run, the asymptotics of
+  a multiway cluster bootstrap with \emph{few} clusters are known to be unreliable
+  (the percentile CI can under-cover). The H\'ajek two-projection variance is an
+  analytic \emph{floor} the bootstrap must not undershoot --- a guard against gross
+  understatement --- not a guarantee of nominal coverage at a small realized cluster
+  count. We assert inference validity by construction but it is \emph{unverified at the
+  realized cluster count}; if that count is small, the headline $p$/CI should be read
+  with a few-clusters caveat, and a wild-cluster or sub-cluster correction may be
+  required at lock. We flag this rather than claim the asymptotics through.
   \item \textbf{The graded oracle is synthetic.} It demonstrates correct degradation
   on a templated generator with planted ground truth; it does not show that real AR
   traces share the same $\tau$ structure. It is a correctness fixture (no paper
   numbers).
   \item \textbf{Repair forwards raise compute.} Folded into Eq.~\ref{eq:rpower}'s
   forward surcharge and the v4 decision order; the locked config records it.
+  \item \textbf{Internal design-review scores are ambition, not earned corroboration.}
+  Any internal research-refine / experiment-plan rubric we attach to this design rates
+  the \emph{plan's} novelty, testability, and potential impact \emph{conditional} on a
+  positive run --- it scores an unrun experiment. We do \emph{not} cite such scores as
+  evidence the headline holds or that the standing acceptance risks above are retired;
+  the causal claim is adjudicated only by the authorized run against the pre-registered
+  gates, never by a design rubric.
   \item \textbf{Scope and evidence.} A CI-clearing $\Rhat$ is consistent with the
   existence of localizations whose repair transfers within a class, never ``all
   hallucinations are causally explained.'' Replay is expensive, so this is offline

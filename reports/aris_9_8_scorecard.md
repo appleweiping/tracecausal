@@ -4,6 +4,20 @@ LOCAL_NON_SERVER_ONLY: true
 ARIS_RESEARCH_REFINE_AVG: 9.8
 ARIS_EXPERIMENT_PLAN_AVG: 9.8
 
+> **SCOPE CAVEAT (read before citing any score).** This scorecard rates the
+> **design's ambition and pre-data plan**, NOT any earned empirical result. The
+> high Novelty / Impact / Testability marks are explicitly *conditional* — they
+> reward that "a positive result *would* change the field" and that the gates *can*
+> falsify the claim, i.e. they score an **unrun** experiment. No experiment has run;
+> every paper-facing number is `DATA_NEEDED` and `server.authorized: false`.
+> Therefore this scorecard is **NOT** independent corroboration that the headline
+> survives, and it **must not be cited as evidence** that the standing kill argument
+> (conditional-novelty / construct-sufficiency / positivity / few-clusters /
+> deprived-of-deferral) fails. It is a design-review artifact only; the causal claim
+> is adjudicated solely by the authorized run against the pre-registered gates
+> (G9 / G9-NOV / Axis X′), not by this rubric. The scores below are design ambition,
+> read accordingly.
+
 ## Research-Refine Scores
 
 | Dimension | Score | Evidence |

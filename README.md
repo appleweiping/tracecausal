@@ -57,21 +57,42 @@ paper evidence.
 
 ## Current Status
 
-The Stage-1 design is **frozen** and its Phase-2 identification machinery is
-**implemented and frozen** (uncommitted): the locked method/theory/analysis plan
-is `docs/redesign/REDESIGN_v4.md`; the CIU estimand contract and pure-Python
-identification helpers live in `src/tracecausal/` (`ciu.py`, `nuisance.py`,
-`oracle_gen.py`, `nullpool.py`) with the passing unit harness
-`tests/test_ciu_nulldata.py` (no model, no GPU); the AR-lead freeze is
-`configs/experiments/redesign_v4_ar_lead.yaml`; and a Stage-1 paper skeleton with
-`DATA_NEEDED` result placeholders (no fabricated numbers) is at `paper/main.tex`
-(+ `paper/references.bib`, not yet compiled). See also `docs/active_todo.md`,
-`docs/milestones.md`, `docs/paper_claims_status.md`, and
-`docs/definition_of_done.md`.
+The current frozen design is **REDESIGN_v5** (`docs/redesign/REDESIGN_v5.md`,
+status `design_frozen_stage1_RR`): the **cross-example repair-transfer
+certification** statistic `R_hat` (gate **G9**) with the baseline-conditional
+novelty gate **G9-NOV**, valid dependent-pair inference (two-way source×target
+cluster bootstrap + class-block-permutation diagnostic + Hájek cross-check), the
+selective-inference correction (SI-1 split / SI-2 Bonferroni), and the adversarial
+oracle **Axis X′**. v5 is an **additive** layer on the preserved v4 core
+(`docs/redesign/REDESIGN_v4.md`): the in-place necessity statistic `U_hat` is
+retained as a **screening** filter (no longer the headline), along with the CIU /
+matched-null / proper-scoring / G1–G8 machinery.
+
+Both layers are **implemented and frozen** as pure-Python (no model, no GPU). The
+kernels live in `src/tracecausal/`: the v4 core (`ciu.py`, `nuisance.py`,
+`oracle_gen.py`, `nullpool.py`, `interventions.py`) plus the v5 surfaces
+(`repair_transfer.py`, `repair_ops.py`, `binning_selection.py`,
+`selective_inference.py`, `adversarial_oracle.py`). The unit harness
+`tests/test_ciu_nulldata.py` and the rest of `tests/` are green (no model, no GPU).
+The frozen lead plans are `configs/experiments/redesign_v5_ar_lead.yaml` (current)
+and `configs/experiments/redesign_v4_ar_lead.yaml` (preserved core); both keep
+`server.authorized: false`.
+
+The Stage-1 Registered-Report paper is `paper/main.tex` (+ `paper/references.bib`),
+with `DATA_NEEDED` result placeholders (no fabricated numbers); it **compiles**
+reproducibly (see `paper/README.md` for the build + TeX-environment note). The
+run-later execution packet is `reports/run_packet.md` with the resumable queue
+manifest `experiments/queue_manifest.yaml`; the thin CLI entrypoints under
+`scripts/` (`extract_traces.py`, `select_binning.py`, `run_intervention.py`,
+`run_repair_transfer.py`, `run_adversarial_oracle.py`, `score_detection.py`,
+`eval_gates.py`) **default to dry-run** and only execute real work when BOTH
+`server.authorized: true` (in `--config`) AND `--i-have-authorization` are set.
+See also `docs/active_todo.md`, `docs/milestones.md`,
+`docs/paper_claims_status.md`, and `docs/definition_of_done.md`.
 
 Server experiments are deliberately **not** run from this local setup; every
 paper-facing claim remains `pending` and no empirical number exists. The next real
-stage is ARIS experiment-plan review of the formal trace extraction and
-intervention protocol, followed by server-side trace extraction only after the plan
-passes the documented gates and the run is explicitly authorized
-(`server.authorized: false` until then).
+stage is the **v5-aware** ARIS experiment-plan re-review (covering G9 / G9-NOV /
+Axis X′), followed by server-side trace extraction only after the plan passes the
+documented gates and the run is explicitly authorized (`server.authorized: false`
+until then).

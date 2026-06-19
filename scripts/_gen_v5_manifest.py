@@ -118,9 +118,9 @@ dimensions:
 repair_transfer:
   transport_variant: C                       # source-derived repair POLICY (not a state)
   estimand: within_class_source_neq_target_u_statistic   # Eq. R
-  variance_primary: two_way_source_target_cluster_bootstrap   # MF-4, >=10,000 reps
-  null_test: class_block_source_label_permutation             # MF-4 null; tests A6
-  variance_crosscheck: hajek_projection_zeta_1
+  variance_primary: two_way_source_target_cluster_bootstrap   # MF-4 CONFIRMATORY, >=10,000 reps
+  null_test: class_block_source_block_signflip_diagnostic     # G9-FIX: DIAGNOSTIC, not confirmatory; probes A6 sign-symmetry (NOT exact for R=0)
+  variance_crosscheck: hajek_projection_zeta10_over_nsource_plus_zeta01_over_ntarget  # both ordered-kernel projections (findings 4, 10)
   nested_matched_null_mc: target_clustered_covariance
   positivity_excluded_max_per_class: 0.5     # A7
   max_repair_utility_drop: 0.02              # G9 bounded repair utility cost (D_util^repair)
@@ -169,13 +169,19 @@ adversarial_oracle:
 # --- v5 G9 power model (REDESIGN_v5 section 4.6; Eq. R-VAR / R-POWER) --------
 # Formula identity only; all inputs DATA_NEEDED, estimated on V_sel/V_inf at lock.
 g9_power:
-  sigma_r_decomposition: "Var(R_hat) = (4/n_eff)*zeta_1 + (1/N_pair)*(sigma_MC^2/R_null + sigma_op^2/R_int)"
+  # Ordered/asymmetric-kernel two-projection variance (findings 4, 10); matches
+  # tracecausal.nuisance.estimate_sigma_r and repair_transfer.hajek_projection_var.
+  # The symmetric (4/n_eff)*zeta_1 shorthand collapsed both margins and is NOT used.
+  sigma_r_decomposition: "Var(R_hat) = zeta_10/n_source + zeta_01/n_target + (1/N_pair)*(sigma_MC^2/R_null + sigma_op^2/R_int)"
   r_power_identity: "R_power = ceil( (z * sigma_R_hi / m_R)^2 * D_eff )"
   m_r_identity: "m_R = m_R0 / (2*kappa_lo^repair - 1)"           # Eq. m-R
   estimate_sigma_r: tracecausal.nuisance.estimate_sigma_r
   r_power_repair: tracecausal.nuisance.r_power_repair            # NOT v4 r_power (MF-5)
-  zeta_1: DATA_NEEDED
-  n_eff: DATA_NEEDED
+  zeta_10: DATA_NEEDED                                           # source projection var
+  zeta_01: DATA_NEEDED                                           # target-margin projection var
+  n_source: DATA_NEEDED
+  n_target: DATA_NEEDED
+  n_eff: DATA_NEEDED                                             # = min(n_source, n_target), bookkeeping only
   sigma_mc: DATA_NEEDED
   sigma_op: DATA_NEEDED
   d_eff: DATA_NEEDED

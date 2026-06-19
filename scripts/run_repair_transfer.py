@@ -99,21 +99,29 @@ def _resolve_mode(args):
 
 
 def _heavy(args, plan):
+    # Authorized run dispatch by sub-mode. The pure-CPU aggregation modes
+    # (build_matched_null_pool, estimate_r_hat) are fully implemented over on-disk
+    # artifacts (no model, no GPU; RunInputError if inputs are absent). The forward
+    # modes (operator_freeze, repair_transfer_forwards) bind the pinned model through
+    # the ForwardProvider seam (actionable error if unconfigured), never a blanket
+    # NotImplementedError. Reachable only after the §1 authorization flip.
     mode = plan["task"]
-    if mode in {"operator_freeze", "repair_transfer_forwards"}:
-        import torch  # noqa: F401
-        import transformers  # noqa: F401
-        from tracecausal import (  # noqa: F401
-            repair_gain, select_operator, transport,
-        )
-    else:  # pure-CPU aggregation modes
-        from tracecausal import (  # noqa: F401
-            build_null_pool, class_block_permutation, estimate_sigma_r,
-            hajek_projection_var, r_hat, two_way_cluster_bootstrap,
-        )
-    raise NotImplementedError(
-        f"authorized {mode} wires the listed kernels over real artifacts; "
-        "the do-not-run packet does not synthesize run inputs"
+    if mode == "build_matched_null_pool":
+        from _runners import run_build_matched_null_pool as _run
+        return _run(args, plan)
+    if mode == "estimate_r_hat":
+        from _runners import run_estimate_r_hat as _run
+        return _run(args, plan)
+    if mode == "operator_freeze":
+        from _runners import run_operator_freeze as _run
+        return _run(args, plan)
+    if mode == "repair_transfer_forwards":
+        from _runners import run_repair_transfer_forwards as _run
+        return _run(args, plan)
+    raise RuntimeError(
+        f"unspecified repair-transfer mode {mode!r}; pass one of "
+        "--freeze-operator / --build-matched-null-pool / --stage repair_transfer / "
+        "--estimate-r-hat"
     )
 
 

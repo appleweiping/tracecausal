@@ -13,3 +13,11 @@ data/processed/
 *.env
 api_keys.yaml
 
+# LaTeX build artifacts (paper compiles from main.tex + references.bib)
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.out
+paper/*.pdf
+paper/*.toc
+

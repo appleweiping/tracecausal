@@ -93,6 +93,34 @@ def main() -> int:
     ):
         return 1
 
+    # The frozen v5 lead plan (the current source of truth: repair-transfer
+    # certification + selective inference + Axis X') must likewise keep server
+    # execution unauthorized AND carry the corrected v5 inference-plan markers, so a
+    # silent regression to v4-style statistics (e.g. the symmetric (4/n_eff)*zeta_1
+    # shorthand the kernel no longer uses) is caught by the local validator.
+    if not require_markers(
+        ROOT / "configs" / "experiments" / "redesign_v5_ar_lead.yaml",
+        [
+            "authorized: false",
+            "status: design_frozen_stage1_RR",
+            # headline v5 repair-transfer certification surface
+            "g9_repair_transfer:",
+            "g9_novelty:",
+            "two_way_source_target_cluster_bootstrap",
+            # corrected ordered-kernel two-projection variance (findings 4, 10): the
+            # v5 plan must NOT carry the superseded (4/n_eff)*zeta_1 wording.
+            "zeta_10/n_source + zeta_01/n_target",
+            "r_power_repair",
+            # the sign-flip null is a DIAGNOSTIC, not the confirmatory test (G9-FIX)
+            "class_block_source_block_signflip_diagnostic",
+            # selective-inference fold + repair-margin attenuation (Eq. m-R)
+            "selection_split: required",
+            "alpha_1' = 0.05 / (m' * K_bin * K_op)",
+        ],
+        "redesign-v5",
+    ):
+        return 1
+
     if not require_markers(
         ROOT / "docs" / "intervention_protocol.md",
         [

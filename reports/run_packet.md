@@ -560,10 +560,12 @@ python scripts/run_repair_transfer.py \
 ```
 **Expected artifacts:** `repair_transfer/${FAM}__${DS}__rhat.json` — per-class and
 weighted `R_hat` (`RHatEstimate`), the two-way-cluster-bootstrap CI
-`(ci_lo, ci_hi)`, the class-block-permutation `p`, the Hájek `zeta_1` variance, the
-nested matched-null MC variance, the per-baseline `R_hat(B0..B5)`, and the
-`SigmaREstimate` (`zeta_1`, `n_eff`, `sigma_MC`, `sigma_op`, `D_eff`) — all numbers
-`DATA_NEEDED`.
+`(ci_lo, ci_hi)`, the class-block-permutation `p`, the Hájek ordered-kernel
+two-projection variance (`zeta_10/n_source + zeta_01/n_target`), the nested
+matched-null MC variance, the per-baseline `R_hat(B0..B5)`, and the
+`SigmaREstimate` (`zeta_10`, `zeta_01`, `n_source`, `n_target`, `n_eff`, `sigma_MC`,
+`sigma_op`, `D_eff`; `zeta_1_max_reporting_only` is reporting-only, NOT the variance)
+— all numbers `DATA_NEEDED`.
 
 ### 3.8 Adversarial oracle Axis X′ (fixture-only; no lead data; no model forwards on lead)
 ```bash
@@ -695,9 +697,12 @@ the variance-floored minimum) applies and is recorded.
 - **Screening attenuation**: `kappa = 0.92` ⇒ `2·kappa-1 = 0.84` ⇒
   `U_target = 0.05/0.84 = 0.0595 <= 0.08`.
 - **G9 power model (`R_power`, NOT reused from screening; Eq. R-VAR/R-POWER):**
-  `Var(R_hat) ≈ (4/n_eff)·zeta_1 + (1/N_pair)·(sigma_MC^2/R_null + sigma_op^2/R_int)`;
+  `Var(R_hat) ≈ (zeta_10/n_source + zeta_01/n_target) + (1/N_pair)·(sigma_MC^2/R_null + sigma_op^2/R_int)`
+  — the ordered-kernel **two-projection** variance (findings 4, 10), NOT the
+  superseded symmetric `(4/n_eff)·zeta_1` shorthand;
   `R_power := ceil( (z·sigma_R_hi/m_R)^2 · D_eff )` via `nuisance.r_power_repair`,
-  with `m_R := m_R0/(2·kappa_lo^repair − 1)` (Eq. m-R). `zeta_1`, `n_eff`,
+  with `m_R := m_R0/(2·kappa_lo^repair − 1)` (Eq. m-R). `zeta_10`, `zeta_01`,
+  `n_source`, `n_target`, `n_eff`,
   `sigma_MC`, `sigma_op`, `D_eff`, `m_R0`, `kappa_lo^repair` are all
   **`DATA_NEEDED`**, estimated on `V_sel`/`V_inf` at lock. **No number fabricated.**
 - **The `5.4e-3` figure is NON-BINDING** (a forward-timing scale note, not a
