@@ -1,0 +1,167 @@
+project: tracecausal
+status: design_only
+run_tier: paper_candidate
+redesign: v4
+# Additive freeze of the AR-LLM lead per docs/redesign/REDESIGN_v4.md.
+# Extends configs/experiments/formal_tracecausal.yaml; changes no v3 meaning.
+# NO SERVER RUN AUTHORIZED. server.authorized stays false.
+claim: causal process segments are intervention-useful for hallucination auditing
+
+# --- frozen AR-LLM lead paradigm (REDESIGN_v3 §1.1, carried by v4) ----------
+lead_paradigm: autoregressive_llm
+model_families:
+  - autoregressive_llm        # frozen lead
+transfer_only_paradigms:      # demoted to a transfer study, not the single claim
+  - reasoning_trace_lrm
+  - diffusion_llm
+
+# --- FROZEN lead models + datasets (the two-family feasible point, §4.7) -----
+# FREEZE (phase2b): AR-LLM lead = 2 families, Qwen2.5-7B-Instruct + Llama-3.1-8B-
+# Instruct. Open, locally hostable AR models. The model FAMILY + exact instruct id
+# is pre-registered here; the exact weight revision/commit hash is pinned at run
+# authorization (server.authorized stays false until then).
+lead_models:
+  - id: ar_lead_qwen
+    family: qwen2.5
+    paradigm: autoregressive
+    role: lead_family_1
+    checkpoint: Qwen/Qwen2.5-7B-Instruct   # pre-registered; pin exact revision/hash at run authorization
+    revision: pin_exact_revision_at_run_authorization
+    prompt_template_hash: pending_before_run
+  - id: ar_lead_llama
+    family: llama3.1
+    paradigm: autoregressive
+    role: lead_family_2
+    checkpoint: meta-llama/Llama-3.1-8B-Instruct  # pre-registered; pin exact revision/hash at run authorization
+    revision: pin_exact_revision_at_run_authorization
+    prompt_template_hash: pending_before_run
+datasets:
+  # FREEZE (phase2b): lead datasets = TriviaQA (factuality) + HotpotQA (multi-hop).
+  # pre-registered; pin exact revision/split-hash at run authorization.
+  lead:                       # the two lead datasets carried into the 2-cell point
+    - triviaqa            # factuality; pre-registered; pin split-hash at run authorization
+    - hotpotqa            # multi-hop; pre-registered; pin split-hash at run authorization
+  transfer:
+    - haleval_style
+    - diffusion_lm_trace_style
+  split_policy: frozen_train_valid_test_hash_required_before_run
+  leakage_check: required_before_run
+
+baselines:
+  - random_segment
+  - output_entropy
+  - semantic_entropy
+  - output_signature_detector
+  - reasoning_consistency_detector
+  - selfcheckgpt
+  - inside_detector
+  - diffusion_trace_detector
+ciu_scored: true              # all output-only baselines re-scored on U_hat (G5')
+
+seeds:
+  paper_minimum: 20           # floor preserved (>= 20)
+  manifest: configs/seeds/paper_20.txt
+
+metrics:
+  detection:
+    - auroc
+    - auprc
+    - fpr_at_95_tpr
+  intervention:
+    - factuality_delta
+    - answer_accuracy_delta
+    - utility_delta
+
+# --- pre-registered gates (v3 thresholds kept; v4 restatements of G7/G8) -----
+gates:
+  random_intervention_margin_abs: 0.05    # G1 necessity (on u_deflated, §2.12/§2.13)
+  max_utility_drop_abs: 0.02              # G2 utility
+  heldout_taxonomy_retention: 0.80        # transfer retention floor
+  novelty_margin_abs: 0.03                # G5' selector-beats-best-adapted-detector
+  localization_margin_abs: 0.03           # G6/G7 leakage bound beta_hi*Delta_pos < this
+  g1_evaluated_on: u_deflated             # REDESIGN_v4 §2.13
+  g7_evaluated_on: leakage_bound_upper_ci # REDESIGN_v4 §4.1 G7 conjunct 2
+  g8_requires:
+    - sham_null_ci_overlaps_zero
+    - bounded_calibrated_ood_slope
+
+# --- v4 graded oracle / OOD deflation / leakage slope (§2.10G, §2.12, §2.11) -
+graded_oracle:
+  axes:
+    - partial_leakage         # Axis P: tau_inert = beta*Delta_pos
+    - multi_cause             # Axis M: effect split across m_c spans
+    - distractor              # Axis D: inert span, high detector signal
+  crossing_margin: 0.03
+  axis_p_leakage_grid: [0.0, 0.01, 0.02, 0.03, 0.04, 0.06]
+  axis_m_cause_grid: [1, 2, 3, 4]
+  axis_d_distractor_grid: [0.5, 1.0, 2.0, 4.0]
+ood_deflation: true
+displaced_mass_bins: [0.0, 0.05, 0.1, 0.2, 0.4, 1.0]
+leakage_slope_ci: required
+
+# --- v4 nuisance re-estimation (validation-only, frozen at lock; §4.6) ------
+sigma_u_source: validation_bootstrap_upper_ci   # power uses sigma_hi (B1)
+kappa_source: validation_lower_ci               # U_target uses kappa_lo (B2)
+n_val_min:
+  sigma_u: 200
+  kappa: 300
+proximity_pool_min: 8         # §4.6 B3 floor; coarsen bin if mean m_pool < 8
+nuisance_freeze: at_analysis_lock_validation_only_test_split_sealed
+
+# --- v4 power/compute feasibility (the exhibited point, §4.7) ---------------
+# Formula evaluation, not evidence. See nuisance.r_power / nuisance.u_target.
+#
+# Budget identity (the ONE arithmetic everything must be consistent with):
+#   cells * n * forwards_per_example * c_fwd <= budget_gpu_hr
+# At the pre-registered point (n=850, forwards_per_example=18, budget=14 GPU-hr)
+# the affordable per-forward cost is c_fwd <= 14 / (cells*850*18); it HALVES when
+# the cell count doubles. The PRE-REGISTERED feasible operating point is 2 cells,
+# so the binding ceiling c_fwd_max is the 2-cell value 4.57e-4 (NOT 5.4e-3).
+# Rounded DOWN from the exact 14/(2*850*18)=4.5752e-4 so the ceiling stays WITHIN
+# budget: 2*850*18*4.57e-4 = 13.98 <= 14. (Rounding UP to 4.58e-4 would give 14.01,
+# tipping over the 14-GPU-hr line — fixed here, Opus minor c_fwd rounding.)
+c_fwd_max: 4.57e-4           # = floor(14/(2*850*18), 3sf); 2-cell budget-binding ceiling (~1.65 s/fwd)
+# Historical/non-binding: the v3-era 5.4e-3 figure was a forward-timing scale note,
+# never a budget-feasibility ceiling — 2*850*18*5.4e-3 = 165.2 GPU-hr (>> 14), and
+# 4*850*18*5.4e-3 = 330.5 GPU-hr. Retained only to document the reconciliation; it
+# is NOT the run ceiling. (REDESIGN_v4.md §4.7.)
+c_fwd_legacy_note_only: 5.4e-3   # NON-BINDING; superseded by c_fwd_max above
+feasible_point:
+  # PRE-REGISTERED feasible operating point (n, cells, kappa); pin exact revision
+  # at run authorization.
+  n: 850                      # examples/cell (R_power 841 rounded up)
+  # Full FROZEN grid = 2 families (Qwen2.5-7B-Instruct, Llama-3.1-8B-Instruct) x
+  # 2 datasets (TriviaQA, HotpotQA) = 4 cells, infeasible at full n (§4.7). The
+  # PRE-REGISTERED feasible point is cells = 2: hold one family across both datasets
+  # (per the v3 decision order); 4 cells only if measured c_fwd <= 2.28e-4.
+  cells: 2                    # PRE-REGISTERED feasible cells = 2 (1 family x 2 datasets)
+  cells_default: 2            # back-compat alias for `cells`
+  full_grid_cells: 4          # 2 families x 2 datasets (infeasible at full n; see decision_order)
+  kappa: 0.92                 # 2*kappa-1 = 0.84 attenuation
+  sigma_u: 0.30               # within the 0.707 bound (B1 / §4.5 E2)
+  z: 2.734                    # m=8 Holm family, alpha_1 = 0.00625
+  proximity_inflation: 1.125  # 1 + 1/8 (mean m_pool = 8)
+  u_target: 0.0595            # 0.05 / 0.84
+  forwards_per_example: 18    # (1 + 1 + R_int) at R_int = 16
+  budget_gpu_hr: 14
+  # The two budget-binding ceilings, rounded DOWN to stay within budget (consistent
+  # with the identity above; exact values are 4.5752e-4 and 2.2876e-4):
+  c_fwd_2cell_implied: 4.57e-4  # floor(14/(2*850*18)); 2-cell binding ceiling == c_fwd_max
+  c_fwd_4cell_implied: 2.28e-4  # floor(14/(4*850*18)); 4-cell binding ceiling (~half)
+  # Verification at the pre-registered 2-cell point: 2*850*18*4.57e-4 = 13.98 <= 14.
+  budget_check_2cell_gpu_hr: 13.98
+feasible_point_pre_registered: "n=850, cells=2, kappa=0.92, c_fwd<=4.57e-4 GPU-hr/fwd; pre-registered, pin exact revision/hash at run authorization"
+decision_order:
+  # The ceiling c_fwd_max (4.57e-4) holds the 2-cell point; 4 cells is only
+  # affordable if measured c_fwd drops to the 4-cell ceiling 2.28e-4.
+  - measure_c_fwd_validation_timing_calibration       # timing, not an experiment
+  - if_c_fwd_at_or_below_4cell_implied: prefer_4_cells_full_n  # c_fwd <= 2.28e-4
+  - elif_c_fwd_at_or_below_2cell_implied: hold_2_cells_full_n  # 2.28e-4 < c_fwd <= 4.57e-4 (c_fwd_max)
+  - else_c_fwd_above_2cell_implied: request_budget_increase_else_reduce_n
+
+compute_budget_ref: docs/compute_budget.md
+
+# --- run discipline ----------------------------------------------------------
+server:
+  authorized: false
+  reason: design review not complete; Stage-1 registered report, no run

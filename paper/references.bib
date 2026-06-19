@@ -1,0 +1,499 @@
+% references.bib --- tracecausal
+% BUILD-NOW / RUN-LATER: bibliography for the Stage-1 registered-report-grade paper.
+% Only real, confidently-existing works are cited. Any entry whose identifier we
+% could not verify with confidence is marked with a "% TODO-verify" comment rather
+% than fabricated. Do NOT invent arXiv IDs.
+
+% ===================================================================
+% Base papers / direct neighbours (positioned against in Related Work)
+% ===================================================================
+
+@article{farquhar2024semantic,
+  title   = {Detecting hallucinations in large language models using semantic entropy},
+  author  = {Farquhar, Sebastian and Kossen, Jannik and Kuhn, Lorenz and Gal, Yarin},
+  journal = {Nature},
+  volume  = {630},
+  number  = {8017},
+  pages   = {625--630},
+  year    = {2024},
+  publisher = {Nature Publishing Group},
+  doi     = {10.1038/s41586-024-07421-0}
+}
+
+@inproceedings{kuhn2023semantic,
+  title     = {Semantic Uncertainty: Linguistic Invariances for Uncertainty Estimation in Natural Language Generation},
+  author    = {Kuhn, Lorenz and Gal, Yarin and Farquhar, Sebastian},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2023}
+}
+
+@inproceedings{manakul2023selfcheckgpt,
+  title     = {{SelfCheckGPT}: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models},
+  author    = {Manakul, Potsawee and Liusie, Adian and Gales, Mark J. F.},
+  booktitle = {Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year      = {2023},
+  eprint    = {2303.08896},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+@inproceedings{chen2024inside,
+  title     = {{INSIDE}: {LLMs}' Internal States Retain the Power of Hallucination Detection},
+  author    = {Chen, Chao and Liu, Kai and Chen, Ze and Gu, Yi and Wu, Yue and Tao, Mingyuan and Fu, Zhihang and Ye, Jieping},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024},
+  eprint    = {2402.03744},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+% RACE --- joint reasoning/answer-consistency hallucination detection for Large
+% Reasoning Models. arXiv:2506.04832 (this paper is in the project corpus); also
+% published at AAAI-26 (Vol. 40, No. 39, pp. 33377--33385, doi 10.1609/aaai.v40i39.40624).
+% Title/authors confirmed against the primary arXiv and AAAI OJS pages.
+@inproceedings{race2025reasoning,
+  title         = {Joint Evaluation of Answer and Reasoning Consistency for Hallucination Detection in Large Reasoning Models},
+  author        = {Wang, Changyue and Su, Weihang and Ai, Qingyao and Liu, Yiqun},
+  booktitle     = {Proceedings of the Fortieth AAAI Conference on Artificial Intelligence (AAAI)},
+  volume        = {40},
+  number        = {39},
+  pages         = {33377--33385},
+  year          = {2026},
+  doi           = {10.1609/aaai.v40i39.40624},
+  eprint        = {2506.04832},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+% TraceDet --- diffusion-LLM hallucination detection from denoising traces.
+% arXiv:2510.01274; published at ICLR 2026. Author list and venue confirmed against
+% the supplied base paper (base_papers/tracecausal/TRACEDET.pdf): the action-trace /
+% information-bottleneck sub-trace detector, average AUROC gain of 15.2%.
+% Code: https://github.com/chang-sx/TraceDet
+@inproceedings{tracedet2026diffusion,
+  title         = {{TraceDet}: Hallucination Detection from the Decoding Trace of Diffusion Large Language Models},
+  author        = {Chang, Shenxu and Yu, Junchi and Wang, Weixing and Chen, Yongqiang and Yu, Jialin and Torr, Philip and Gu, Jindong},
+  booktitle     = {International Conference on Learning Representations (ICLR)},
+  year          = {2026},
+  eprint        = {2510.01274},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+% FCCT / IRI --- Fine-grained Cross-modal Causal Tracing + Intervention-time
+% Intermediate Representation Injection, for LVLM object-hallucination mitigation.
+% arXiv:2511.05923; accepted at AAAI-26. Author list, title and venue confirmed
+% against the primary arXiv page (id 2511.05923) and the supplied base paper
+% (base_papers/tracecausal/causal_tracing_lvlm.pdf): Gaussian-perturbation causal
+% tracing that quantifies recovery rate ("recovery in output probability") on a
+% fixed grid of components (MHSA/FFN/hidden) and layers, then a training-free
+% injection (IRI) reinforces the strong-effect sites.
+@inproceedings{li2026fcct,
+  title         = {Causal Tracing of Object Representations in Large Vision Language Models: Mechanistic Interpretability and Hallucination Mitigation},
+  author        = {Li, Qiming and Ye, Zekai and Feng, Xiaocheng and Zhong, Weihong and Ma, Weitao and Feng, Xiachong},
+  booktitle     = {Proceedings of the Fortieth AAAI Conference on Artificial Intelligence (AAAI)},
+  year          = {2026},
+  volume        = {40},
+  number        = {37},
+  pages         = {31645--31653},
+  doi           = {10.1609/aaai.v40i37.40431},
+  eprint        = {2511.05923},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CV}
+}
+
+% CDCR-SFT --- Causal-DAG Construction and Reasoning via supervised fine-tuning;
+% mitigates logically-inconsistent hallucinations by training LLMs to build/reason
+% over a variable-level DAG. Published at AAAI-26 (proceedings page 31852); extended
+% version arXiv:2508.12495. Author list, venue, dataset (CausalDR, 25,368 samples),
+% and headline numbers (CLADDER 95.33%, HaluEval +10%) confirmed against the supplied
+% base paper (base_papers/tracecausal/mitigating_causal_reasoning.pdf).
+% Code/data: https://github.com/MrLYG/CDCR-SFT
+@inproceedings{li2026cdcrsft,
+  title         = {Mitigating Hallucinations in Large Language Models via Causal Reasoning},
+  author        = {Li, Yuangang and Shen, Yiqing and Nian, Yi and Gao, Jiechao and Wang, Ziyi and Yu, Chenxiao and Li, Li and Wang, Jie and Hu, Xiyang and Zhao, Yue},
+  booktitle     = {Proceedings of the Fortieth AAAI Conference on Artificial Intelligence (AAAI)},
+  volume        = {40},
+  number        = {38},
+  pages         = {31852--31860},
+  year          = {2026},
+  doi           = {10.1609/aaai.v40i38.40454},
+  eprint        = {2508.12495},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+% ===================================================================
+% Mechanistic / causal tracing and intervention methods
+% ===================================================================
+
+@inproceedings{meng2022rome,
+  title     = {Locating and Editing Factual Associations in {GPT}},
+  author    = {Meng, Kevin and Bau, David and Andonian, Alex and Belinkov, Yonatan},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2022},
+  eprint    = {2202.05262},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+@inproceedings{vig2020causal,
+  title     = {Investigating Gender Bias in Language Models Using Causal Mediation Analysis},
+  author    = {Vig, Jesse and Gehrmann, Sebastian and Belinkov, Yonatan and Qian, Sharon and Nevo, Daniel and Singer, Yaron and Shieber, Stuart},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2020}
+}
+
+@inproceedings{geiger2021causal,
+  title     = {Causal Abstractions of Neural Networks},
+  author    = {Geiger, Atticus and Lu, Hanson and Icard, Thomas and Potts, Christopher},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2021},
+  eprint    = {2106.02997},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG}
+}
+
+@article{wang2023interpretability,
+  title         = {Interpretability in the Wild: a Circuit for Indirect Object Identification in {GPT-2} small},
+  author        = {Wang, Kevin and Variengien, Alexandre and Conmy, Arthur and Shlegeris, Buck and Steinhardt, Jacob},
+  journal       = {arXiv preprint arXiv:2211.00593},
+  year          = {2022},
+  eprint        = {2211.00593},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG}
+}
+
+% ===================================================================
+% Proper scoring rules (theory for the evaluator-elicitation mechanism)
+% ===================================================================
+
+@article{gneiting2007strictly,
+  title     = {Strictly Proper Scoring Rules, Prediction, and Estimation},
+  author    = {Gneiting, Tilmann and Raftery, Adrian E.},
+  journal   = {Journal of the American Statistical Association},
+  volume    = {102},
+  number    = {477},
+  pages     = {359--378},
+  year      = {2007},
+  publisher = {Taylor \& Francis},
+  doi       = {10.1198/016214506000001437}
+}
+
+@article{savage1971elicitation,
+  title     = {Elicitation of Personal Probabilities and Expectations},
+  author    = {Savage, Leonard J.},
+  journal   = {Journal of the American Statistical Association},
+  volume    = {66},
+  number    = {336},
+  pages     = {783--801},
+  year      = {1971},
+  publisher = {Taylor \& Francis}
+}
+
+@article{brier1950verification,
+  title     = {Verification of Forecasts Expressed in Terms of Probability},
+  author    = {Brier, Glenn W.},
+  journal   = {Monthly Weather Review},
+  volume    = {78},
+  number    = {1},
+  pages     = {1--3},
+  year      = {1950}
+}
+
+% ===================================================================
+% Causal inference foundations
+% ===================================================================
+
+@book{pearl2009causality,
+  title     = {Causality: Models, Reasoning, and Inference},
+  author    = {Pearl, Judea},
+  edition   = {2nd},
+  year      = {2009},
+  publisher = {Cambridge University Press},
+  address   = {New York}
+}
+
+@book{imbens2015causal,
+  title     = {Causal Inference for Statistics, Social, and Biomedical Sciences: An Introduction},
+  author    = {Imbens, Guido W. and Rubin, Donald B.},
+  year      = {2015},
+  publisher = {Cambridge University Press}
+}
+
+@article{holland1986statistics,
+  title     = {Statistics and Causal Inference},
+  author    = {Holland, Paul W.},
+  journal   = {Journal of the American Statistical Association},
+  volume    = {81},
+  number    = {396},
+  pages     = {945--960},
+  year      = {1986}
+}
+
+% ===================================================================
+% Statistics: multiple comparisons, bootstrap, agreement
+% ===================================================================
+
+@article{holm1979simple,
+  title     = {A Simple Sequentially Rejective Multiple Test Procedure},
+  author    = {Holm, Sture},
+  journal   = {Scandinavian Journal of Statistics},
+  volume    = {6},
+  number    = {2},
+  pages     = {65--70},
+  year      = {1979}
+}
+
+@book{efron1994bootstrap,
+  title     = {An Introduction to the Bootstrap},
+  author    = {Efron, Bradley and Tibshirani, Robert J.},
+  year      = {1994},
+  publisher = {Chapman \& Hall/CRC}
+}
+
+@article{cohen1960coefficient,
+  title     = {A Coefficient of Agreement for Nominal Scales},
+  author    = {Cohen, Jacob},
+  journal   = {Educational and Psychological Measurement},
+  volume    = {20},
+  number    = {1},
+  pages     = {37--46},
+  year      = {1960}
+}
+
+@article{fleiss1971measuring,
+  title     = {Measuring Nominal Scale Agreement Among Many Raters},
+  author    = {Fleiss, Joseph L.},
+  journal   = {Psychological Bulletin},
+  volume    = {76},
+  number    = {5},
+  pages     = {378--382},
+  year      = {1971}
+}
+
+@article{spearman1904attenuation,
+  title     = {The Proof and Measurement of Association between Two Things},
+  author    = {Spearman, Charles},
+  journal   = {The American Journal of Psychology},
+  volume    = {15},
+  number    = {1},
+  pages     = {72--101},
+  year      = {1904}
+}
+
+% ----- U-statistics / dependent-pair inference (the R_hat estimator) -----------
+
+@article{hoeffding1948class,
+  title     = {A Class of Statistics with Asymptotically Normal Distribution},
+  author    = {Hoeffding, Wassily},
+  journal   = {The Annals of Mathematical Statistics},
+  volume    = {19},
+  number    = {3},
+  pages     = {293--325},
+  year      = {1948}
+}
+
+@book{lee1990ustatistics,
+  title     = {U-Statistics: Theory and Practice},
+  author    = {Lee, A. J.},
+  year      = {1990},
+  publisher = {Marcel Dekker},
+  address   = {New York}
+}
+
+@article{cameron2011robust,
+  title     = {Robust Inference with Multiway Clustering},
+  author    = {Cameron, A. Colin and Gelbach, Jonah B. and Miller, Douglas L.},
+  journal   = {Journal of Business \& Economic Statistics},
+  volume    = {29},
+  number    = {2},
+  pages     = {238--249},
+  year      = {2011},
+  publisher = {Taylor \& Francis}
+}
+
+@article{owen2007pigeonhole,
+  title     = {The Pigeonhole Bootstrap},
+  author    = {Owen, Art B.},
+  journal   = {The Annals of Applied Statistics},
+  volume    = {1},
+  number    = {2},
+  pages     = {386--411},
+  year      = {2007},
+  publisher = {Institute of Mathematical Statistics},
+  doi       = {10.1214/07-AOAS122}
+}
+
+@book{good2005permutation,
+  title     = {Permutation, Parametric, and Bootstrap Tests of Hypotheses},
+  author    = {Good, Phillip I.},
+  edition   = {3rd},
+  year      = {2005},
+  publisher = {Springer},
+  address   = {New York}
+}
+
+% ----- Selective / post-selection inference (the SI correction) ----------------
+
+@article{benjamini2009selective,
+  title     = {Selective Inference in Complex Research},
+  author    = {Benjamini, Yoav and Heller, Ruth and Yekutieli, Daniel},
+  journal   = {Philosophical Transactions of the Royal Society A},
+  volume    = {367},
+  number    = {1906},
+  pages     = {4255--4271},
+  year      = {2009}
+}
+
+@article{berk2013validpostselection,
+  title     = {Valid Post-Selection Inference},
+  author    = {Berk, Richard and Brown, Lawrence and Buja, Andreas and Zhang, Kai and Zhao, Linda},
+  journal   = {The Annals of Statistics},
+  volume    = {41},
+  number    = {2},
+  pages     = {802--837},
+  year      = {2013}
+}
+
+@article{fithian2014optimal,
+  title         = {Optimal Inference After Model Selection},
+  author        = {Fithian, William and Sun, Dennis and Taylor, Jonathan},
+  journal       = {arXiv preprint arXiv:1410.2597},
+  year          = {2014},
+  eprint        = {1410.2597},
+  archivePrefix = {arXiv},
+  primaryClass  = {math.ST}
+}
+
+@article{cox1975note,
+  title     = {A Note on Data-Splitting for the Evaluation of Significance Levels},
+  author    = {Cox, D. R.},
+  journal   = {Biometrika},
+  volume    = {62},
+  number    = {2},
+  pages     = {441--444},
+  year      = {1975},
+  publisher = {Oxford University Press},
+  doi       = {10.1093/biomet/62.2.441}
+}
+
+% ----- SUTVA / interference (assumption A5) ------------------------------------
+
+@article{rubin1980randomization,
+  title     = {Randomization Analysis of Experimental Data: The Fisher Randomization Test (Comment)},
+  author    = {Rubin, Donald B.},
+  journal   = {Journal of the American Statistical Association},
+  volume    = {75},
+  number    = {371},
+  pages     = {591--593},
+  year      = {1980}
+}
+
+% ===================================================================
+% Registered reports / pre-registration methodology
+% ===================================================================
+
+@article{chambers2014registered,
+  title     = {Registered Reports: A new publishing initiative at Cortex},
+  author    = {Chambers, Christopher D.},
+  journal   = {Cortex},
+  volume    = {49},
+  number    = {3},
+  pages     = {609--610},
+  year      = {2013},
+  publisher = {Elsevier}
+}
+
+@article{nosek2018preregistration,
+  title     = {The preregistration revolution},
+  author    = {Nosek, Brian A. and Ebersole, Charles R. and DeHaven, Alexander C. and Mellor, David T.},
+  journal   = {Proceedings of the National Academy of Sciences (PNAS)},
+  volume    = {115},
+  number    = {11},
+  pages     = {2600--2606},
+  year      = {2018}
+}
+
+% ===================================================================
+% Datasets / models (frozen lead; pre-registered, pinned at run authorization)
+% ===================================================================
+
+@inproceedings{joshi2017triviaqa,
+  title     = {{TriviaQA}: A Large Scale Distantly Supervised Challenge Dataset for Reading Comprehension},
+  author    = {Joshi, Mandar and Choi, Eunsol and Weld, Daniel S. and Zettlemoyer, Luke},
+  booktitle = {Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year      = {2017},
+  eprint    = {1705.03551},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+@inproceedings{yang2018hotpotqa,
+  title     = {{HotpotQA}: A Dataset for Diverse, Explainable Multi-hop Question Answering},
+  author    = {Yang, Zhilin and Qi, Peng and Zhang, Saizheng and Bengio, Yoshua and Cohen, William W. and Salakhutdinov, Ruslan and Manning, Christopher D.},
+  booktitle = {Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year      = {2018},
+  eprint    = {1809.09600},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+@inproceedings{lin2022truthfulqa,
+  title     = {{TruthfulQA}: Measuring How Models Mimic Human Falsehoods},
+  author    = {Lin, Stephanie and Hilton, Jacob and Evans, Owain},
+  booktitle = {Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year      = {2022},
+  eprint    = {2109.07958},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+@inproceedings{li2023halueval,
+  title     = {{HaluEval}: A Large-Scale Hallucination Evaluation Benchmark for Large Language Models},
+  author    = {Li, Junyi and Cheng, Xiaoxue and Zhao, Wayne Xin and Nie, Jian-Yun and Wen, Ji-Rong},
+  booktitle = {Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year      = {2023},
+  eprint    = {2305.11747},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+@article{qwen2025technical,
+  title         = {{Qwen2.5} Technical Report},
+  author        = {{Qwen Team}},
+  journal       = {arXiv preprint arXiv:2412.15115},
+  year          = {2024},
+  eprint        = {2412.15115},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+
+@article{grattafiori2024llama,
+  title         = {The {Llama} 3 Herd of Models},
+  author        = {{Llama Team, AI @ Meta}},
+  journal       = {arXiv preprint arXiv:2407.21783},
+  year          = {2024},
+  eprint        = {2407.21783},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.AI}
+}
+
+% ===================================================================
+% Hallucination surveys / framing
+% ===================================================================
+
+@article{ji2023survey,
+  title     = {Survey of Hallucination in Natural Language Generation},
+  author    = {Ji, Ziwei and Lee, Nayeon and Frieske, Rita and Yu, Tiezheng and Su, Dan and Xu, Yan and Ishii, Etsuko and Bang, Ye Jin and Madotto, Andrea and Fung, Pascale},
+  journal   = {ACM Computing Surveys},
+  volume    = {55},
+  number    = {12},
+  pages     = {1--38},
+  year      = {2023},
+  publisher = {ACM}
+}
+
+% LOS-style output-signature detector --- represented by the supplied paper bundle
+% in literature_boundary.md; exact citation not yet pinned.
+% (Intentionally NOT given a fabricated key/id; cite from the bundle at lock.)

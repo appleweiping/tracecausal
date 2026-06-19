@@ -1,0 +1,1362 @@
+%==============================================================================
+% tracecausal --- main.tex
+% Stage-1 Registered-Report-grade paper (v5 contribution).
+%
+% BUILD-NOW / RUN-LATER. This is a well-formed, self-contained LaTeX source. It is
+% intentionally NOT compiled here. NO experiment, training, model load, or GPU run
+% backs any number in this file: every results table/figure is a DATA_NEEDED
+% placeholder describing what WILL be reported after the authorized run. The only
+% numerics that appear are closed-form / quadrature checks, each labelled "formula
+% evaluation, not evidence" --- they are design arithmetic, not measurements.
+%
+% HEADLINE (v5): causal localization CERTIFIED BY INTERVENTION USEFULNESS via
+% cross-example repair-transfer (gate G9) atop the CIU matched-null estimand. The
+% within-example necessity statistic U_hat (the v4 headline) is demoted to a
+% screening statistic; the cross-example repair-transfer statistic R_hat is the
+% headline certification, under named assumptions A5--A9 and Identification
+% Lemma 5.1, with two-way cluster-bootstrap / class-block-permutation inference,
+% selective-inference correction, and an adversarial-oracle Axis X'.
+%
+% server.authorized stays false. Empirical validation follows the pre-registered
+% analysis plan (Sec. ref{sec:setup}).
+%==============================================================================
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  citecolor=green!45!black,
+  urlcolor=blue!55!black
+}
+
+% --- theorem environments -----------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{definition}{Definition}
+
+% --- macros -------------------------------------------------------------------
+\newcommand{\Uhat}{\widehat{U}}
+\newcommand{\Rhat}{\widehat{R}}
+\newcommand{\Udefl}{\widehat{U}_{\mathrm{defl}}}
+\newcommand{\Dutil}{\widehat{D}_{\mathrm{util}}}
+\newcommand{\Dutilr}{\widehat{D}^{\mathrm{rep}}_{\mathrm{util}}}
+\newcommand{\Pii}{\Pi_i}
+\newcommand{\Pij}{\Pi_j}
+\newcommand{\bartau}{\bar{\tau}}
+\newcommand{\dpos}{\Delta_{\mathrm{pos}}}
+\newcommand{\Eop}{\mathbb{E}}
+\newcommand{\noop}{\mathrm{no\_op}}
+\newcommand{\ind}{\mathbf{1}}
+\newcommand{\sR}{\sigma_{R}}
+\newcommand{\sU}{\sigma_{u}}
+\newcommand{\Ystar}{Y}
+\newcommand{\policy}{\rho}
+\newcommand{\Sstar}{S^{\star}}
+
+% DATA_NEEDED placeholder box (visually flags every empty result slot).
+\newcommand{\dataneeded}[1]{%
+  \fbox{\parbox{0.92\linewidth}{\small\textbf{[DATA\_NEEDED]}\\ #1}}%
+}
+\newcommand{\dn}{\textcolor{red}{\textbf{[DATA\_NEEDED]}}}
+
+\title{\textbf{Repair-Transfer-Certified Trace Localization:\\
+Certifying Causal Usefulness of Hallucination Localizations by\\
+Cross-Example Intervention Transfer}\\[2pt]
+\large A Pre-registered Stage-1 Registered Report}
+
+\author{Anonymous Author(s)\\ \small (under double-blind review)}
+\date{}
+
+\begin{document}
+\maketitle
+
+%==============================================================================
+\begin{abstract}
+%==============================================================================
+Hallucination \emph{detection} answers a predictive question --- is this output
+false? --- but a localization is only causally meaningful if intervening on it
+\emph{does something}. We argue that the right bar is not ``can we measure an
+above-pool causal contrast honestly'' (an infrastructure claim) but ``can the
+localization \emph{license a reusable repair} that a detector cannot.'' We
+operationalize this as \textbf{repair-transfer certification}: a trace segment is
+certified causally useful for a hallucination class when a training-free,
+source-derived localized repair \emph{policy}, applied to held-out in-class
+\emph{target} examples, recovers factuality beyond a matched-null repair, at a
+bounded edit budget and a bounded utility cost. The certification statistic
+$\Rhat$ (cross-example, repair-style) is the headline; the within-example
+necessity statistic $\Uhat$ --- a matched-null Causal Intervention-Usefulness
+(CIU) estimand with a per-example null pool matched on operator, budget, length,
+layers, reference, and example --- is demoted to a \emph{screening} statistic.
+We name the source$\to$target transport map and the five assumptions (A5--A9:
+SUTVA-for-repair, within-class exchangeability, positivity, reference validity,
+matched-null repair validity) under which $\Rhat$ is an identified causal
+estimand, and prove an \textbf{identification lemma} (Lemma~\ref{lem:rident})
+that splits the assumption-free part (a definitional matched-null subtraction)
+from the assumption-loaded causal part, mirroring the CIU tautology/assumption
+split. Because example indices recur across many pairs, $\Rhat$ is treated as a
+within-class \textbf{U-statistic} with a confirmatory \textbf{two-way
+(source,target) cluster bootstrap} CI, corroborated by a \textbf{class-block
+sign-flip diagnostic}, not a paired bootstrap. Every data-adaptive choice --- the proximity binning, the repair
+policy, the class weights --- is a \textbf{selection event} paid for by a
+selection split or a Bonferroni penalty over an enumerated grid. The crucial
+contrast is made \emph{empirical}, not rhetorical: a baseline panel B0--B5 feeds
+detector-selected localizations (TraceDet-, entropy-, probe-selected) through the
+\emph{identical} repair pipeline, and our novelty is \emph{conditional} on
+out-transferring them. An adversarial oracle (Axis X$'$) includes a
+\emph{provable} control-failure regime: a confounder collinear with the leakage
+controls that they cannot see, where the registered, falsifiable prediction is
+that $\Rhat$ itself collapses --- and if it does not, the paper reports the
+method unsound for that confounder class. The lead paradigm is autoregressive
+LLMs; reasoning and diffusion are a transfer study, with TraceDet additionally
+entering as a repair-baseline. This paper states the method, discharges the
+theory, and pre-registers the full analysis plan and kill-gates. \textbf{No
+empirical result is reported}: every table and figure is a
+\textsc{data\_needed} placeholder, and \emph{empirical validation follows the
+pre-registered, authorized run} (\texttt{server.authorized} remains
+\texttt{false}). The contribution is the certified estimand and its
+identification design.
+\end{abstract}
+
+%==============================================================================
+\section{Introduction}\label{sec:intro}
+%==============================================================================
+
+\paragraph{The gap: detection $\ne$ causal usefulness.} Large language models
+hallucinate, and a large literature now \emph{detects} hallucinations from output
+uncertainty, sampling consistency, or internal states
+\cite{farquhar2024semantic,manakul2023selfcheckgpt,chen2024inside,ji2023survey}.
+Detection answers a predictive question --- \emph{is this output likely false?}
+The closest neighbours to this work operate on \emph{traces} but still ask a
+detection question: \textbf{TraceDet} \cite{tracedet2026diffusion} extracts the
+information-bottleneck sub-trace of a diffusion decoding trace and reports a
+concrete downstream win ($+15.2\%$ AUROC average); fine-grained causal tracing in
+vision-language models (\textbf{FCCT}/\textbf{IRI}) \cite{li2026fcct} quantifies a
+fixed-grid \emph{recovery rate} of components under Gaussian perturbation. Neither
+asks whether a \emph{localization} is causally useful in the operational sense
+that matters for auditing: \emph{does editing it license something a detector
+cannot}? A segment can be highly predictive of hallucination yet causally inert (a
+symptom), and causally decisive yet carry no salient detector signal. The two
+questions come apart precisely where intervention matters.
+
+\paragraph{Why ``honest measurement'' is not enough.} A natural first answer ---
+and the answer of the matched-null CIU estimand we build on (Sec.~\ref{sec:ciu})
+--- is to \emph{measure} an above-pool causal contrast honestly: edit the selected
+segment, edit a budget/length/layer/reference/example-matched random segment, and
+report the difference. That is leakage-safe and reproducible, but it certifies the
+claim by \emph{internal consistency}: the estimator is unbiased for a contrast the
+method itself defines, and every internal control checks that the \emph{estimator}
+is well-behaved --- never that the localized segment is \emph{useful for anything
+a detector cannot already do}. Honest measurement of a self-defined quantity reads
+as infrastructure, not discovery. A top-venue contribution needs ``we can do $X$
+that prior work cannot, here is the falsifiable test that $X$ holds.'' This paper's
+$X$ is: \emph{the localization licenses a reusable, training-free repair that
+transfers across examples beyond a matched-null repair, and beats
+detector-selected localizations fed through the identical repair pipeline}.
+
+\paragraph{The central object: repair-transfer certification.} We define a trace
+segment to be \textbf{repair-transfer-certified} for a hallucination class when a
+\emph{training-free, source-derived localized repair policy}, applied to held-out
+in-class \emph{target} examples, recovers factuality beyond a matched-null repair,
+at a bounded edit budget and bounded utility cost --- under the registered
+operator, transport map, reference construction, class partition, and matched-null
+assumptions (A5--A9, Sec.~\ref{sec:method:assump}). Certification is
+\emph{sufficient} evidence of causal usefulness, not a definition of it: a segment
+may be causally necessary in place yet not single-span-repairable, and a generic
+repair may transfer for non-causal reasons. We therefore drop any ``iff'' framing
+and scope the claim to the registered design. The headline statistic is the
+cross-example repair-transfer estimand $\Rhat$; the within-example necessity
+statistic $\Uhat$ (the matched-null CIU estimand) is demoted to a \emph{screening}
+statistic. The patching/repair machinery, idle in a measurement-only design,
+becomes the star.
+
+\paragraph{The unifying principle.} One sentence states the whole paper:
+\begin{quote}\itshape
+Counterfactual usefulness must be earned out-of-sample, under a reference the
+method does not control.
+\end{quote}
+Three surfaces are \emph{instances} of this one principle, not additive tricks:
+(i) \textbf{certification} ($\Rhat$, gate G9) earns usefulness out-of-sample
+\emph{across examples} (held-out targets); (ii) \textbf{selective-inference
+correction} (Sec.~\ref{sec:si}) earns gate verdicts out-of-sample \emph{across the
+data-adaptive binning and the operator selection} (both are selection events that
+must be paid for); (iii) the \textbf{adversarial oracle} (Axis X$'$,
+Sec.~\ref{sec:method:oracle}) earns the reference-validity assumption
+out-of-distribution \emph{in the reference} (a regime where the reference is
+misspecified and, provably, the controls \emph{cannot} catch it, so $\Rhat$ itself
+must collapse). Remove any one and the principle is incompletely tested.
+
+\paragraph{Why $\Rhat$ is not a second $\Uhat$.} $\Uhat$ measures
+\emph{necessity in place} (mask the source span in $x_i$, read the factuality drop
+in $x_i$): within-example, ablation-style. $\Rhat$ measures \emph{sufficiency
+across examples} (apply a source-derived repair policy to a held-out $x_j$, read
+the factuality gain in $x_j$): cross-example, repair-style, at a budget, against a
+matched-null repair baseline. A necessary-in-place span need not yield a
+transferable repair; the two are decorrelated in a scientifically interesting way,
+which is exactly why G9 is a \emph{new} falsifiable test and not a restatement of
+the necessity gate.
+
+\paragraph{The falsifiable central claim.} Our pre-registered, pre-data claim is:
+\begin{quote}\itshape
+If hallucination in autoregressive LLMs admits localizable causal segments whose
+localization licenses a reusable repair, and the matched-null repair pool is a
+valid counterfactual within the stated leakage and reference bounds, then the
+cross-example repair-transfer estimand $\Rhat$ clears the repair margin $m_R$
+(Holm/selective-inference-corrected two-way-cluster-bootstrap CI lower bound above
+$m_R$, class-block-permutation $p<\alpha_1'$) with bounded utility cost
+$\Dutilr\le0.02$ and bounded positivity loss on at least two lead datasets, and
+the CIU localization out-transfers the best detector-selected localization through
+the identical repair pipeline (gate G9-NOV).
+\end{quote}
+This claim can lose, and each way of losing is routed to a distinct, honest
+conclusion (Sec.~\ref{sec:routing}): a transfer failure with a \emph{powered},
+theory-informative null routes to a necessity-only paper (gated, not automatic); a
+generic-repair pass routes to a diagnostic; a baseline match downgrades novelty;
+and a control-silent-yet-certified result under the collinear confounder withdraws
+certification and reports a soundness limitation.
+
+\paragraph{Contributions.} Concretely, this paper contributes:
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{A certified causal-usefulness estimand} $\Rhat$
+  (Eq.~\ref{eq:R}), cross-example and repair-style, with a frozen source$\to$target
+  transport map $T$ (Variant~C; Sec.~\ref{sec:method:transport}) carrying a repair
+  \emph{policy} rather than a residual state, sitting atop the matched-null CIU
+  screening statistic $\Uhat$ (Sec.~\ref{sec:ciu}).
+  \item \textbf{An identification lemma with five named assumptions.} A5--A9 make
+  every causal premise attackable; Lemma~\ref{lem:rident} splits the assumption-free
+  matched-null subtraction from the assumption-loaded causal interpretation
+  (Sec.~\ref{sec:method:assump}, Sec.~\ref{sec:theory}).
+  \item \textbf{Valid dependent-pair inference.} $\Rhat$ is a within-class
+  U-statistic \cite{hoeffding1948class,lee1990ustatistics}; inference uses a
+  two-way (source,target) cluster bootstrap \cite{cameron2011robust,owen2007pigeonhole}
+  and a class-block permutation null \cite{good2005permutation}, with a derived
+  power model $\sR$ (Eq.~\ref{eq:rvar}) that is \emph{not} the within-example
+  $\sU$ (Sec.~\ref{sec:method:inference}, Sec.~\ref{sec:setup:power}).
+  \item \textbf{Selective-inference correction.} Every data-adaptive choice is a
+  selection event, paid for by a selection split or an enumerated-grid Bonferroni
+  penalty \cite{cox1975note,fithian2014optimal,benjamini2009selective,berk2013validpostselection}
+  (Sec.~\ref{sec:si}).
+  \item \textbf{An empirical detector contrast, not a rhetorical one.} A baseline
+  panel B0--B5 runs detector-selected localizations (including TraceDet
+  \cite{tracedet2026diffusion}) through the identical repair pipeline; our novelty is
+  \emph{conditional} on out-transferring them (gate G9-NOV; Sec.~\ref{sec:method:baselines},
+  Sec.~\ref{sec:setup:gates}).
+  \item \textbf{An adversarial oracle with a provable failure regime.} Axis X$'$
+  includes a confounder collinear with the leakage controls (which therefore cannot
+  trip), where the registered prediction is that $\Rhat$ collapses; if it does not,
+  certification is withdrawn for that confounder class (Sec.~\ref{sec:method:oracle}).
+  \item \textbf{A complete pre-registered analysis plan with hardened routing}: the
+  necessity-only downgrade is publishable only if the transfer null is powered and
+  theory-informative (Sec.~\ref{sec:setup}, Sec.~\ref{sec:routing}).
+\end{enumerate}
+
+\paragraph{Status.} Following the registered-report methodology
+\cite{chambers2014registered,nosek2018preregistration}, this is a Stage-1 design:
+method, theory, and a pre-registered, pre-data analysis plan. The CIU estimand
+contract and the v4 identification machinery (the graded oracle, the OOD-deflation
+correction, the leakage-slope regression, and the nuisance estimators) are
+implemented and frozen; the v5 repair-transfer modules (the U-statistic estimator,
+the two-way cluster bootstrap, the class-block permutation null, the transport map,
+the selection-as-code procedure, and the adversarial Axis X$'$) are \emph{implemented
+as do-not-run pure-Python and exercised by a green unit harness (113 passing tests,
+no model, no GPU)}. No experiment has been run; the empirical results follow the
+authorized run. \texttt{server.authorized} remains \texttt{false} throughout.
+
+%==============================================================================
+\section{Related Work}\label{sec:related}
+%==============================================================================
+
+\paragraph{Trace-based detection (TraceDet).} \textbf{TraceDet}
+\cite{tracedet2026diffusion} models a diffusion LLM's denoising as an
+\emph{action trace} and, via an information-bottleneck objective, isolates the
+sub-trace maximally informative about hallucination, training a classifier that
+improves detection AUROC by $15.2\%$ on average. This is the sharpest neighbour and
+the one whose ``causal beats correlational'' rebuttal must be cashed in
+empirically, not asserted. TraceDet is (i) \emph{detection}, optimized for AUROC,
+with no intervention estimand: it never edits the trace and reads a factuality
+change; (ii) defined on the \emph{diffusion} paradigm. We freeze autoregressive
+LLMs as the lead and treat diffusion as a \emph{transfer} study with the identical
+operator, so TraceDet enters our AR-lead story in exactly one role: not as a
+diffusion detector (that stays in the transfer table) but as a \emph{TraceDet-derived
+AR span-selection adapter} --- its IB sub-trace selection criterion re-cast onto
+AR-LLM traces --- serving as baseline \textbf{B1} in the repair panel
+(Sec.~\ref{sec:method:baselines}), localized to a span and fed through our
+\emph{identical} repair pipeline. Our
+contribution is \emph{conditional} on out-transferring it (gate G9-NOV): if a
+TraceDet-selected span licenses an equally transferable repair, our novelty
+downgrades to ``the matched-null + selective-inference certification protocol,''
+not ``causal-vs-correlational localization.'' This is the honest, falsifiable form
+of the distinction.
+
+\paragraph{Fixed-grid causal tracing and recovery-rate localization (FCCT/IRI).}
+Fine-grained Cross-modal Causal Tracing \cite{li2026fcct} adds controlled Gaussian
+noise to vision-language inputs, restores clean activations component-by-component
+and layer-by-layer, and quantifies the \emph{recovery in output probability} on a
+\emph{fixed grid} of components (MHSA/FFN/hidden) and layers; the companion
+training-free Intermediate Representation Injection (IRI) reinforces the
+strong-effect sites. This is recovery-\emph{rate} tracing: an effect is read off a
+pre-enumerated component/layer grid, with no matched-null counterfactual, no
+selective-inference correction for the grid choice, and no out-of-sample
+\emph{transfer} test --- the localized injection is applied to the same example
+whose grid was scored. We differ on all three axes: a per-example \emph{matched}
+null (the effect is above-pool, not above-zero), a selective-inference-corrected
+treatment of the binning/operator selection, and a \emph{cross-example}
+certification (the repair is earned on held-out targets). FCCT/IRI is the
+fixed-grid recovery-rate neighbour our net-novelty statement names explicitly.
+
+\paragraph{SFT-based causal mitigation (CDCR-SFT).} \textbf{CDCR-SFT}
+\cite{li2026cdcrsft} \emph{trains} an LLM (supervised fine-tuning on a 25{,}368-sample
+CausalDR corpus) to construct a variable-level causal DAG and reason over it,
+improving causal-reasoning benchmarks and reducing HaluEval hallucination by
+$\sim 10\%$. It is a \emph{training-time} mitigation that reshapes the model's
+reasoning, with no localization estimand and no per-trace intervention test. We are
+\emph{training-free} and \emph{diagnostic}: we localize and certify a span in a
+\emph{fixed} model's trace and measure whether editing it transfers, never
+fine-tuning. CDCR-SFT operates on variable-level causal structure at the corpus
+level; we operate on token-span localization at the trace level. The two are
+complementary, not competing, and we position against it to delimit scope, not to
+claim a horse-race.
+
+\paragraph{Causal tracing and editing (ROME and the causal-mediation line).}
+Mechanistic work locates and edits factual associations
+\cite{meng2022rome}, performs causal mediation \cite{vig2020causal}, and studies
+causal abstractions and circuits \cite{geiger2021causal,wang2023interpretability}.
+ROME-style causal tracing reads an indirect effect of restoring a clean activation
+and edits a weight; it is the methodological ancestor of FCCT and of our
+\texttt{patch}/\texttt{replay} operators. We borrow the intervention-as-evidence
+stance but differ in unit (a check-worthy claim span in a generation trace), outcome
+(evaluator factuality elicited under a strictly proper rule), estimand (an
+above-pool \emph{matched} contrast, then a cross-example repair-transfer), and
+inference (a selective-inference-correct, dependent-pair-valid certification with a
+pre-registered kill-gate plan). The novelty is the certified estimand and its
+identification design, not any individual operator.
+
+\paragraph{Uncertainty / consistency detectors (the repair-panel baselines).}
+\textbf{Semantic entropy} \cite{farquhar2024semantic,kuhn2023semantic} measures
+meaning-level output uncertainty; \textbf{SelfCheckGPT}
+\cite{manakul2023selfcheckgpt} measures sampling consistency; \textbf{INSIDE}
+\cite{chen2024inside} reads internal-state uncertainty; \textbf{RACE}
+\cite{race2025reasoning} scores reasoning/answer consistency. All answer an
+orthogonal, output- or representation-level predictive question and produce no
+intervention estimand. Under our design they are not dismissed: each becomes a
+\emph{localization selector} (B2/B3-style) whose span is fed through the identical
+repair pipeline, so a strong detector \emph{helps} the baseline beat us --- the
+fairness incentive is symmetric, and out-transferring them is the empirical content
+of our novelty claim.
+
+%==============================================================================
+\section{The CIU Screening Statistic (preserved core)}\label{sec:ciu}
+%==============================================================================
+
+We freeze autoregressive LLM generation as the lead paradigm. A generation produces
+tokens $x_{1:T}$ with hidden states $h^{(l)}_{1:T}$ and next-token distributions
+$p_t$. The \textbf{primary granularity} is a \emph{claim span} $S=[a,b]$: the
+minimal token span an atomic-claim extractor attributes a check-worthy proposition
+to. Token windows and reasoning/denoising sub-traces are nuisance/transfer
+granularities analysed at a single primary setting to control the confirmatory
+family (Sec.~\ref{sec:setup}).
+
+\subsection{The proper-scoring evaluator (mechanism A3, preserved)}\label{sec:ciu:proper}
+
+Let $Y_i\in\{0,1\}$ be a factuality label from a hashed evaluator. To make the
+evaluator's probabilistic report $p$ incentive-compatible, it is elicited under the
+strictly proper Bregman/Savage binary score
+\begin{equation}
+S_G(p,y) = G(p) + G'(p)(y-p),
+\qquad G_B(p)=1-p+p^2,
+\label{eq:savage}
+\end{equation}
+which reduces (Theorem~\ref{thm:propriety}) to $S(p,y)=1-(p-y)^2$ with unique
+maximizer $p=q$ under $Y\sim\mathrm{Bernoulli}(q)$
+\cite{savage1971elicitation,gneiting2007strictly,brier1950verification}. This is
+the evaluator pre-commitment assumption A3; it makes no causal claim and is reused
+verbatim by the cross-example targets $Y_j$ of $\Rhat$ (with a re-estimated
+cross-example agreement $\kappa^{\mathrm{rep}}$, Sec.~\ref{sec:setup:power}).
+
+\subsection{Intervention operators}\label{sec:ciu:ops}
+
+Let $S=[a,b]$ with downstream answer positions $t>b$. The \textbf{primary screening
+operator} \texttt{mask} (counterfactual evidence ablation) sets the pre-softmax
+attention logits from each $t>b$ to each key $j\in[a,b]$ to $-\infty$ and
+renormalizes over surviving keys,
+\begin{equation}
+\text{for } j\in[a,b]:\ \mathrm{logit}_{t,j}\leftarrow-\infty;
+\qquad \alpha_{t,\cdot}\leftarrow\mathrm{softmax}_{\,j\notin[a,b]}\big(q_t\!\cdot\! k_j/\sqrt{d}\big),
+\label{eq:mask}
+\end{equation}
+without editing the residual stream, RoPE/position ids of surviving tokens, or the
+logit head; the displaced softmax mass is persisted as \texttt{displaced\_mass}.
+The \textbf{repair operators} (the stars of $\Rhat$) are reference-factored:
+\texttt{patch} (sufficiency), for $t\in[a,b]$, $l\in L_{\mathrm{patch}}$,
+$h^{(l)}_t\leftarrow(1-\alpha)h^{(l)}_t+\alpha\,h^{(l),\mathrm{ref}}_t$;
+\texttt{replay}, roll back to the decoder state before $a$, re-decode $[a,b]$ under
+a reference policy, free-run the suffix; \texttt{no\_op} is the negative control
+($\alpha=0$). \texttt{SHAM-MASK} and an \texttt{answer-adjacent} control isolate the
+operator's own footprint and positional/recency effects.
+
+\subsection{The per-example matched null pool $\Pii$ (preserved)}\label{sec:ciu:null}
+
+For operator $\theta$ on $S$ with budget $c(I^\theta_S)=k$, the per-example matched
+null pool is
+\begin{equation}
+\Pii(S) := \mathrm{Uniform}\Big\{\, S'\in x_i :\ c(I^\theta_{S'})=k,\ \mathrm{len}(S')=\mathrm{len}(S),
+\ L_{\mathrm{patch}}\ \text{identical},\ S'\cap S=\varnothing,
+\ \text{same ref\_hash},\ \text{same } x_i \,\Big\},
+\label{eq:pool}
+\end{equation}
+proximity-stratified to a distance-to-answer bin of width $\dpos$ (holding the
+positional-leakage term fixed) and serialized to \texttt{null\_pool\_hash}. Only
+\emph{which positions are edited} varies across a draw.
+
+\subsection{The screening estimator $\Uhat$ (demoted from headline)}\label{sec:ciu:estimator}
+
+With $Y_i\in\{0,1\}$ evaluator factuality and $Q_i\in[0,1]$ utility, define under
+operator $\theta$ and reference $\rho$
+\begin{align}
+\delta_i(S;\rho) &= Y_i\!\big(\mathrm{do}(I^{\theta,\rho}_S)\big) - Y_i(\noop),\\
+\delta_i(\tilde S;\rho) &= \Eop_{\tilde S\sim\Pii(S)}\!\big[Y_i(\mathrm{do}(I^{\theta,\rho}_{\tilde S}))\big] - Y_i(\noop),\\
+u_i(S;\rho) &= \delta_i(S;\rho) - \delta_i(\tilde S;\rho),
+\label{eq:ui}
+\end{align}
+and the CIU estimator $\Uhat(\text{selector};\rho)=\frac1n\sum_i u_i(\Sstar(x_i);\rho)$
+with utility drop $\Dutil=\frac1n\sum_i[Q_i(\noop)-Q_i(\mathrm{do}(I^{\theta,\rho}_{\Sstar}))]$.
+The OOD-deflated screening statistic $\Udefl$ subtracts a calibrated
+\texttt{displaced\_mass} dose-response footprint (Eq.~\ref{eq:deflate}). \textbf{In
+v5, $\Udefl$ is a screening gate (G1, preserved), not the headline}: it filters
+candidate localizations into the repair-transfer certification, which is where the
+causal-usefulness claim is earned.
+
+\subsection{Mask OOD deflation (preserved)}\label{sec:ciu:ood}
+
+On inert spans, any non-zero $\Uhat_{\mathrm{inert}}$ is operator artifact by
+construction. Binning \texttt{displaced\_mass} and fitting
+$\Uhat_{\mathrm{inert}}=s_{\mathrm{OOD}}\cdot\texttt{displaced\_mass}+c_{\mathrm{OOD}}+\text{noise}$
+yields the dose-response slope, whose calibrated footprint at a real span's own
+$d^\star$ is subtracted:
+\begin{equation}
+\Udefl(\Sstar) = \Uhat(\Sstar) - \widehat{\mathrm{art}}\big(\texttt{displaced\_mass}(\Sstar)\big),
+\qquad
+\widehat{\mathrm{art}}(d^\star)=\hat s_{\mathrm{OOD}}\,d^\star+\hat c_{\mathrm{OOD}},
+\label{eq:deflate}
+\end{equation}
+with the footprint's CI propagated in quadrature.
+
+%==============================================================================
+\section{The Certification Statistic $\Rhat$ (v5 headline)}\label{sec:method}
+%==============================================================================
+
+\subsection{The source$\to$target transport protocol $T$}\label{sec:method:transport}
+
+The decisive design choice is \emph{which} object crosses examples. We name three
+variants and freeze Variant~C.
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{Variant A (reference-state transport, rejected).} Inject the
+  \emph{source}'s reference residual state $h^{\mathrm{ref}}(x_i)$ at mapped target
+  positions. Rejected: cross-example residual states are not comparable (different
+  prompt, hidden geometry), positivity fails, and the edit is not a well-defined
+  \texttt{patch} on $x_j$.
+  \item \textbf{Variant B (target-own reference at mapped positions, rejected as
+  headline).} Patch the \emph{target}'s own $h^{\mathrm{ref}}(x_j)$ at positions
+  mapped from the source span. Rejected as headline (it reduces to a within-target
+  repair whose only cross-example content is the position map, too weak to certify
+  transfer); \emph{kept as an ablation} that isolates the position-map contribution.
+  \item \textbf{Variant C (source-derived repair \emph{policy} transport, frozen
+  headline).} The source localization induces a repair \emph{policy}
+  $\policy:=(\mathrm{op},\alpha,L_{\mathrm{patch}},\,\text{budget}\;k,\,\mathrm{ref\_type},\,\text{anchor\_rule})$,
+  \emph{not} a state. The policy is applied on the \emph{target}'s own run: the
+  target's claim span is identified by the anchor rule (the frozen alignment map
+  $T$ below), and the target's \emph{own} reference state is patched/replayed there
+  under the source-derived policy. The cross-example content is the policy and
+  anchor --- which is exactly what ``the localization licenses a reusable repair''
+  means.
+\end{itemize}
+
+\paragraph{The frozen anchor/alignment map $T$.} $T(\Sstar(x_i),x_j)$ returns the
+target span $[a_j,b_j]$ by: (i) restricting to atomic-claim spans of the
+\emph{same class} on $x_j$ (taxonomy-matched, frozen partition); (ii) selecting the
+in-class span whose proximity bin to the answer matches the source span's
+(the same $\dpos$ grid the matched null uses); (iii) matching the edit budget $k$
+(length/coordinate count) exactly; (iv) deterministic tie-break (first by position).
+If no in-class, budget-matched, proximity-matched span exists on $x_j$, the
+\textbf{positivity guard fails} and the pair $(i,j)$ is excluded and recorded (the
+A7 positivity event).
+
+\subsection{The estimand and its assumptions}\label{sec:method:assump}
+
+Let $Y_j(\cdot)\in[0,1]$ be the proper-scored evaluator factuality on target $x_j$,
+$\noop$ the unedited target run, and $\Pij$ the per-example matched-null repair pool
+on $x_j$ (proximity- and budget-stratified, the cross-example analogue of
+Eq.~\ref{eq:pool}). Let $\phi_\policy^{[a,b]}$ denote the frozen repair policy
+$\policy$ applied at target span $[a,b]$. Define the per-pair \textbf{repair gain}
+(Variant~C transport, matched-null-controlled):
+\begin{equation}
+g_{ij} = \underbrace{\Big[\,Y_j\big(\mathrm{do}(\phi_\policy^{\,T(\Sstar(x_i),x_j)})\big) - Y_j(\noop)\,\Big]}_{\text{localized repair on target}}
+\;-\;
+\underbrace{\Eop_{S\sim\Pij}\Big[\,Y_j\big(\mathrm{do}(\phi_\policy^{\,S})\big) - Y_j(\noop)\,\Big]}_{\text{matched-null repair on target}}.
+\label{eq:gij}
+\end{equation}
+The \textbf{repair-transfer estimand} is the within-class, source $\ne$ target mean:
+\begin{equation}
+R(\text{selector};\policy) = \Eop_{(i,j):\,\mathrm{class}(i)=\mathrm{class}(j),\, i\ne j,\, \mathrm{positivity}(i,j)}\big[\,g_{ij}\,\big].
+\label{eq:R}
+\end{equation}
+
+\begin{assumption}[A5, intervention consistency / SUTVA for the repair]\label{ass:a5}
+Applying $\phi_\policy$ at $[a_j,b_j]$ on $x_j$ yields the same $Y_j$ regardless of
+which in-class source induced $\policy$, with no cross-target interference (each
+target is edited and scored independently)
+\cite{rubin1980randomization,imbens2015causal}. \emph{Tested} by the source-swap
+diagnostic NC-2 (Sec.~\ref{sec:method:oracle}).
+\end{assumption}
+\begin{assumption}[A6, within-class exchangeability]\label{ass:a6}
+Targets are exchangeable within a class given the matched-null stratification, so
+$\Eop[g_{ij}]$ does not depend on which source induced $\policy$ beyond $\policy$
+itself. \emph{Tested} by NC-2 and by class-block permutation
+(Sec.~\ref{sec:method:inference}).
+\end{assumption}
+\begin{assumption}[A7, positivity]\label{ass:a7}
+For a non-vanishing fraction of in-class target pairs an in-class,
+proximity-matched, budget-matched target span exists ($T$ is defined). Pairs failing
+positivity are excluded and the \emph{excluded fraction is reported}; a class with
+excluded fraction $\ge0.5$ is routed to ``insufficient positivity,'' not a null.
+\end{assumption}
+\begin{assumption}[A8, reference validity]\label{ass:a8}
+The reference run used to build $\policy$ and to patch the target is a valid
+counterfactual reference. This is the cross-example analogue of the CIU assumption
+A4$^\star$, and the assumption \emph{Axis X$'$ attacks} (Sec.~\ref{sec:method:oracle}).
+\end{assumption}
+\begin{assumption}[A9, matched-null repair validity]\label{ass:a9}
+$\Pij$ is the correct counterfactual repair control: editing \emph{any} matched
+in-budget target span the same way is the right ``what if we had repaired a generic
+span'' baseline. The $g_{ij}$ contrast subtracts it.
+\end{assumption}
+
+\subsection{The G9 baseline panel (the detector contrast made empirical)}\label{sec:method:baselines}
+
+The differentiator is an \emph{empirical margin} over detector-selected
+localizations run through the \emph{identical} repair pipeline:
+\begin{itemize}[leftmargin=1.4em,itemsep=1pt]
+  \item \textbf{B0} --- \texttt{no\_op} floor (target unedited).
+  \item \textbf{B1} --- \textbf{TraceDet}-selected \cite{tracedet2026diffusion}
+  source span (the IB sub-trace localized to a span), same repair, same transport $T$.
+  \item \textbf{B2} --- entropy/uncertainty-selected source span (semantic-entropy /
+  perplexity peak), same pipeline.
+  \item \textbf{B3} --- probe-selected source span (latent linear probe), same pipeline.
+  \item \textbf{B4} --- random same-class source span (the matched-null repair
+  baseline of Eq.~\ref{eq:gij}; the control \emph{inside} $\Rhat$).
+  \item \textbf{B5} --- oracle-selected source span (planted ground truth, oracle
+  fixtures only; upper bound).
+  \item \textbf{PROPOSED} --- the CIU selector's $\Sstar$.
+\end{itemize}
+The headline differentiator is $\Rhat(\text{PROPOSED})-\max_b\{\Rhat(\text{B1}),\Rhat(\text{B2}),\Rhat(\text{B3})\}$,
+with its own Holm/SI-corrected CI (gate G9-NOV). If that margin's lower CI does not
+clear $0$, the novelty downgrades (Sec.~\ref{sec:routing}).
+
+\subsection{Valid dependent-pair inference}\label{sec:method:inference}
+
+A naive paired bootstrap over $(i,j)$ is invalid because each example recurs as a
+source for many targets and a target for many sources: the pairs are
+\emph{dependent}. $\Rhat$ is therefore a within-class two-sample U-statistic
+\cite{hoeffding1948class,lee1990ustatistics}.
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{Estimator.} Per class $c$,
+  $\Rhat_c=\mathrm{mean}_{(i,j):\,i\ne j,\,\mathrm{pos.\,ok}}\,g_{ij}$; overall
+  $\Rhat=\sum_c w_c\Rhat_c$ with pre-registered class weights $w_c$ frozen on the
+  selection split.
+  \item \textbf{Variance (primary).} A \textbf{two-way (source,target) cluster
+  bootstrap} \cite{cameron2011robust,owen2007pigeonhole}: resample source clusters
+  and target clusters independently, recompute $\Rhat$ each replicate
+  ($\ge10{,}000$); the CI is the percentile interval, and G9 gates on its
+  Holm-corrected lower bound.
+  \item \textbf{Variance (cross-check).} The ordered-kernel H\'ajek projection variance
+  $\mathrm{Var}(\Rhat_c)\approx\zeta_{10}/n_{\mathrm{source}}+\zeta_{01}/n_{\mathrm{target}}$,
+  including \textbf{both} the source projection $\Eop[g_{ij}\mid i]$ (variance
+  $\zeta_{10}$) and the target-margin projection $\Eop[g_{ij}\mid j]$ (variance
+  $\zeta_{01}$), as an analytic bound the cluster bootstrap must not undershoot (the
+  symmetric $(4/n_c)\zeta_1$ shorthand understated it and is dropped).
+  \item \textbf{Null (corroborating diagnostic, not the confirmatory test).} A
+  \textbf{class-block source-block sign-flip} \cite{good2005permutation}: under $H_0$
+  ($R=0$), flip an independent $\pm1$ sign on each (class, source) block of the
+  matched-null-centred $g_{ij}$ and compare $\Rhat$ to the sign-flip distribution.
+  This probes \emph{source-block sign-symmetry / A6 within-class exchangeability} and
+  \emph{corroborates} the confirmatory two-way cluster-bootstrap CI; it is \textbf{not}
+  exact for $R=0$. Matched-null centring plus A6 deliver mean-zero plus within-class
+  exchangeability, which are \emph{strictly weaker} than the distributional
+  sign-symmetry a $\pm1$ flip would require (a skewed mean-zero block is exchangeable
+  yet not sign-symmetric), so the confirmatory significance burden rests on the
+  cluster-bootstrap CI lower bound, with this diagnostic required to agree.
+  \item \textbf{Nested matched-null Monte-Carlo uncertainty.} The matched-null term
+  in Eq.~\ref{eq:gij} is estimated by $R_{\mathrm{null}}$ draws from $\Pij$; its MC
+  variance $\sigma_{\mathrm{MC}}^2/R_{\mathrm{null}}$ is added in quadrature into each
+  $g_{ij}$ and propagated through the cluster bootstrap, as is the repair-operator
+  stochasticity (e.g.\ \texttt{replay} decoding).
+\end{itemize}
+
+\subsection{The repair margin $m_R$}\label{sec:method:margin}
+
+$m_R$ is \emph{not} silently inherited from the necessity margin. It is set to a
+design repair margin $m_{R0}$ (a meaningful target-factuality recovery,
+\textsc{data\_needed}, pinned on the selection split), attenuation-adjusted by the
+cross-example evaluator agreement:
+\begin{equation}
+m_R := m_{R0}\big/\big(2\,\kappa^{\mathrm{rep}}_{\mathrm{lo}}-1\big).
+\label{eq:mR}
+\end{equation}
+Whether $m_{R0}$ numerically equals the necessity margin's $0.05$ is a selection-split
+calibration decision, not an assumption; the locked config records $m_{R0}$,
+$\kappa^{\mathrm{rep}}_{\mathrm{lo}}$, and $m_R$. (Formula evaluation only; no value
+asserted here.)
+
+\subsection{The falsifiable kill-gates G9 and G9-NOV}\label{sec:method:g9}
+
+\begin{quote}\itshape
+\textbf{G9 (repair-transfer usefulness).} On $\ge2$ lead datasets, $\Rhat$
+(Eq.~\ref{eq:R}) clears the repair margin with valid dependent-pair inference:
+the \emph{confirmatory} Holm/SI-corrected two-way-cluster-bootstrap CI lower bound
+$>m_R$, corroborated by the class-block sign-flip \emph{diagnostic} $p<\alpha_1'$;
+with bounded utility cost $\Dutilr\le0.02$,
+positivity (excluded-pair fraction $<0.5$ per class, A7), and no class/self leakage
+(source $\ne$ target). Fail $\Rightarrow$ route per Sec.~\ref{sec:routing}.
+\end{quote}
+\begin{quote}\itshape
+\textbf{G9-NOV (baseline-conditional novelty).}
+$\Rhat(\text{PROPOSED})-\max_b\{\Rhat(\text{B1}),\Rhat(\text{B2}),\Rhat(\text{B3})\}>0$
+(Holm/SI-corrected lower CI). Fail $\Rightarrow$ the certification protocol is the
+contribution, not ``causal beats correlational''; the abstract/Sec.~\ref{sec:related}
+novelty downgrades accordingly.
+\end{quote}
+Like the v4 gates, G9 \emph{never} returns ``invalidated'': it reuses the
+fail-closed, no-silent-bypass template. Its routing is honest --- a generic-repair
+pass (B4 also clears) is a \textsf{diagnostic}; a utility-trading pass is reframed as
+abstention; a baseline match is a novelty downgrade.
+
+\subsection{Adversarial oracle Axis X$'$ (a provable failure regime)}\label{sec:method:oracle}
+
+A clean graded oracle (Axis P/M/D, preserved from the CIU design) can only show
+graceful degradation of a \emph{correctly specified} estimator; it can never show
+the method detects its \emph{own} misspecification. We add an adversarial axis.
+\begin{quote}\itshape
+\textbf{Axis X$'$.} The templated generator carries a latent confounder $c_i$ the
+reference run does \emph{not} condition on; $c_i$ jointly drives a span's planted
+$\tau$ and the selector's covariate (entropy / claim-bearing-ness). The
+\texttt{patch}/\texttt{replay} reference is built from the \emph{wrong} $c_i$
+(misspecified reference), so \textbf{A8 fails by construction}. Sweep confounding
+strength $\xi\in\{0,0.25,0.5,0.75,1\}$ ($\xi{=}0$ reproduces the clean oracle).
+\end{quote}
+Two sub-regimes, split so the oracle can both \emph{pass} and \emph{fail} its own
+prediction:
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{X$'$-detectable} ($c_i$ partially orthogonal to the controls). The
+  leakage bound (G7) and SHAM/answer-adjacent null (G8) DO move off zero as $\xi$
+  rises; the registered prediction is that controls trip \emph{before} $\Rhat$
+  certifies a false transferable repair.
+  \item \textbf{X$'$-blind} (the \emph{proven} failure regime). $c_i$ is constructed
+  to be \emph{collinear with the proximity and displaced-mass covariates}, so by
+  construction G7's leakage slope and G8's OOD slope are unchanged --- the confounder
+  hides inside the very nuisance the controls estimate, and the controls
+  \emph{provably do not trip}. The registered, falsifiable prediction is that
+  $\Rhat$ \emph{itself collapses} (the misspecified reference yields a
+  non-transferable repair):
+  \begin{equation}
+  \Rhat(\text{confounded selector};\ \text{misspecified ref})\;\to\;0\ \text{(or negative)}\quad\text{as}\quad\xi\to1.
+  \label{eq:p5}
+  \end{equation}
+  If $\Rhat$ does \emph{not} collapse, the method is unsound for this confounder
+  class and the paper says so.
+\end{itemize}
+A purely correlational score (a detector tracking the confounded covariate) would
+still look good while $\Rhat$ collapses --- the cleanest demonstration that
+repair-transfer certifies causality where correlation cannot, built to be
+\emph{able to fail}. Direct negative controls: \textbf{NC-1} (collinear-confounder)
+registers that G7/G8 do not move while $\Rhat$ must collapse; \textbf{NC-2}
+(source-swap, tests A5/A6) requires $g_{ij}$ invariant under within-class source
+swap up to MC noise, routing a significant source-identity effect to ``re-stratify
+the class partition,'' not a silent fix.
+
+%==============================================================================
+\section{Theory}\label{sec:theory}
+%==============================================================================
+
+We discharge three results. The proper-scoring identity is a closed-form check
+(``formula evaluation, not evidence''); the two identification lemmas (CIU and
+repair-transfer) are the load-bearing causal results. Both keep the same
+discipline: an \emph{assumption-free} part that sampling alone buys, cleanly split
+from an \emph{assumption-loaded} causal part.
+
+\subsection{Propriety for the evaluator (preserved)}
+
+\begin{theorem}[Exact score identity and strict propriety]\label{thm:propriety}
+Let $G_B(p)=1-p+p^2$, so $G_B'(p)=2p-1$ and $G_B''(p)=2$. Then the Savage/Bregman
+binary score $S(p,y)=G_B(p)+G_B'(p)(y-p)$ satisfies $S(p,y)=1-(p-y)^2$ for
+$y\in\{0,1\}$, and under $Y\sim\mathrm{Bernoulli}(q)$ the expected score
+$\Eop[S(p,Y)]$ has its unique maximizer at $p=q$.
+\end{theorem}
+\begin{proof}
+\emph{(Identity.)} $S=(1-p+p^2)+(2p-1)(y-p)=1-p^2+(2p-1)y$. At $y=0$:
+$S=1-p^2=1-(p-0)^2$; at $y=1$: $S=2p-p^2=1-(p-1)^2$; so $S(p,y)=1-(p-y)^2$
+identically. \emph{(Strict propriety.)} $\Eop[S(p,Y)]=G_B(p)+G_B'(p)(q-p)$;
+the first-order condition $\frac{d}{dp}\Eop[S]=G_B''(p)(q-p)=2(q-p)$ vanishes iff
+$p=q$, and the curvature of the expected score is
+$\frac{d^2}{dp^2}\Eop[S]=G_B'''(p)(q-p)-G_B''(p)=0-2=-2<0$, so $\Eop[S]$ is
+strictly concave with the unique maximum at $p=q$
+\cite{savage1971elicitation,gneiting2007strictly}.
+\end{proof}
+\noindent\emph{(Grid check: $\arg\max_p\Eop[S]=q$ recovered at $q\in\{0.2,0.5,0.8\}$;
+numerically estimated curvature $\approx-2$ at all three --- formula evaluation,
+not evidence.)}
+
+\subsection{CIU identification (preserved screening lemma)}\label{sec:theory:ciu}
+
+\begin{proposition}[Assumption-free tautology for the CIU pool]\label{prop:tautology}
+For each $i$, if $\tilde S_i$ is drawn uniformly from $\Pii(\Sstar)$ and $R$ such
+draws are averaged, then $\Eop_{\mathrm{draws}}[\delta_i(\tilde S;\rho)]=\bartau_i(\Pi)$
+exactly with Monte-Carlo error $O(1/\sqrt{R})$, where
+$\bartau_i(\Pi)=\Eop_{S'\sim\Pii(\Sstar)}[\tau_i(S')]$.
+\end{proposition}
+\begin{proof}
+The expectation of a uniform draw of $\tau_i(S')$ over $S'\in\Pii$ is the pool mean;
+no causal or distributional assumption is used, and $O(1/\sqrt{R})$ is the standard
+Monte-Carlo rate.
+\end{proof}
+\begin{assumption}[A4$^\star$: matched pool is the correct counterfactual; testable]\label{ass:a4}
+The matched pool $\Pii$ is the correct counterfactual for the selected segment:
+editing a budget-matched random segment carries no systematic factuality effect
+beyond the position-identity term we net out, with no answer-correlated
+positional-leakage term.
+\end{assumption}
+\begin{lemma}[Unbiasedness of the matched CIU contrast]\label{lem:unbiased}
+Under (A1$'$) matching of operator/budget/length/layers/reference/example, (A2) a
+shared no-op, (A3) a proper-scored evaluator (Theorem~\ref{thm:propriety}), and
+(A4$^\star$),
+$\Eop[\Uhat(\text{selector})]=\Eop_i[\tau_i(\Sstar)]-\Eop_i[\bartau_i(\Pi)]$.
+\end{lemma}
+\begin{proof}
+The shared no-op cancels in each $u_i$ (Eq.~\ref{eq:ui}); A3 makes both arms
+expectations of a fixed incentive-compatible function; Prop.~\ref{prop:tautology}
+gives the random arm without bias; the targeted arm estimates $\tau_i(\Sstar)$;
+average over $i$. A4$^\star$ enters \emph{only} in interpreting $\bartau_i(\Pi)$ as
+the correct counterfactual.
+\end{proof}
+\noindent The lemma gives an unbiased estimator of an above-pool contrast; it does
+\emph{not} entail detectors must score $0$ (a novelty question), and it is the
+\emph{screening} guarantee on which the repair-transfer certification is built.
+
+\subsection{Repair-transfer identification (the headline lemma)}\label{sec:theory:rident}
+
+\begin{lemma}[Identification of the repair-transfer estimand]\label{lem:rident}
+Fix the frozen policy $\policy$, transport $T$, class partition, and matched-null
+repair pool $\Pij$. Then:
+\begin{enumerate}[leftmargin=1.6em,itemsep=2pt,label=(\alph*)]
+  \item \emph{(Assumption-free part.)} By construction of $\Pij$ and the paired
+  $\noop$ subtraction,
+  \begin{equation}
+  \Eop[g_{ij}] = \big(\text{target-repair effect of the transported policy}\big)
+              - \big(\text{mean target-repair effect of a matched-null policy}\big),
+  \label{eq:rident-free}
+  \end{equation}
+  which holds \emph{definitionally} for the registered $\Pij$, exactly as
+  Lemma~\ref{lem:unbiased} holds for $\Uhat$. No causal claim is used here.
+  \item \emph{(Assumption-loaded part.)} Under A5--A9
+  (Sec.~\ref{sec:method:assump}), $R(\text{selector};\policy)$ (Eq.~\ref{eq:R})
+  equals the average controlled repair-transfer effect attributable to the
+  \emph{localized} policy rather than to generic repair or to confounding. Hence
+  $R>0$ is interpreted as causal usefulness \emph{only} under A5--A9, never
+  definitionally.
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+\emph{(a)} The inner expectation in Eq.~\ref{eq:gij} is, by definition of $\Pij$,
+the mean repair effect of a uniformly-drawn matched-null target span, and the first
+bracket is the repair effect of the transported localized span; the shared $\noop$
+cancels in both, giving Eq.~\ref{eq:rident-free} as an identity (Monte-Carlo error
+$O(1/\sqrt{R_{\mathrm{null}}})$ on the inner term).
+\emph{(b)} A9 makes the subtracted term the correct generic-repair counterfactual;
+A5 (SUTVA-for-repair) makes each target's edited outcome well-defined and
+source-independent given $\policy$; A6 (within-class exchangeability) makes
+$\Eop[g_{ij}]$ depend on the source only through $\policy$, so the within-class mean
+over source $\ne$ target pairs estimates a single policy-attributable effect; A7
+(positivity) makes the conditioning event in Eq.~\ref{eq:R} non-degenerate; A8
+(reference validity) makes the repair a valid counterfactual rather than an
+OOD artifact. Under A5--A9 the residual after the A9 subtraction is the controlled
+effect of the \emph{localized} policy, identifying $R$ as the average controlled
+repair-transfer effect.
+\end{proof}
+\noindent\textbf{What the lemma gives and does not give.} \emph{Gives:} a
+selective-inference-correct, dependent-pair-valid certification that a positive,
+CI-clearing $\Rhat$ is the above-matched-null transfer effect of the localized
+policy, under A5--A9. \emph{Does not give:} that a detector-selected span cannot
+also transfer (the empirical content of G9-NOV), nor robustness to a confounder
+collinear with the controls (the explicit X$'$-blind failure mode), nor necessity
+(that is the screening $\Uhat$). The split mirrors the CIU tautology/A4$^\star$
+scaffold: each clause is attackable, and Axis X$'$ stress-tests A8.
+
+\subsection{Positional-leakage sensitivity (preserved)}\label{sec:theory:leakage}
+
+\begin{lemma}[Positional-leakage bound]\label{lem:leakage}
+Let $\beta$ be the maximum per-position leakage slope and $\dpos$ the maximum
+proximity gap $\Pii$ allows. Then the worst-case A4$^\star$ bias is bounded:
+$|\Eop[\Uhat]-U_{\mathrm{true}}|\le\beta\,\dpos$. Proximity-stratifying $\Pii$ drives
+$\dpos\to(\text{bin width})$; the answer-adjacent control estimates $\beta$ by
+$\delta_{\mathrm{inert},i}=\beta\,\mathrm{proximity}_i+\gamma+\varepsilon_i$ on
+validation only, and the gate uses the upper-CI product
+$B_{\mathrm{UCI}}:=\beta_{\mathrm{hi}}\,\dpos$.
+\end{lemma}
+\noindent Gating on $\beta_{\mathrm{hi}}$ keeps the positive-A4$^\star$ gate
+conservative; the same logic gates the X$'$-detectable prediction (controls trip
+before $\Rhat$ certifies).
+
+%==============================================================================
+\section{Selective Inference}\label{sec:si}
+%==============================================================================
+
+\textbf{Every data-adaptive choice is a selection event that must be paid for}
+\cite{benjamini2009selective,berk2013validpostselection,fithian2014optimal}. v5
+corrects two layers a measurement-only design leaves open (the proximity/displaced-mass
+binning) and one v5 adds (the repair-operator selection).
+
+\paragraph{SI-1 --- selection split (primary).} Partition validation into a
+selection split $V_{\mathrm{sel}}$ and an inference split $V_{\mathrm{inf}}$, both
+disjoint from test \cite{cox1975note}. \emph{All} data-adaptive choices --- the
+proximity-bin width $\dpos$, the \texttt{displaced\_mass} edges, the repair policy
+$\policy$ (the operator freeze OS-1), the class weights $w_c$, and $m_{R0}$ --- are
+frozen using $V_{\mathrm{sel}}$ only. Nuisance estimates and all gate statistics are
+computed on $V_{\mathrm{inf}}$/test with every selection held fixed, so the Holm
+family on $V_{\mathrm{inf}}$/test is valid \emph{without} post-selection adjustment:
+$K_{\mathrm{bin}}=K_{\mathrm{op}}=1$ for the inference family.
+
+\paragraph{SI-2 --- selection-conditioned Bonferroni (fallback).} If splitting costs
+too much power (the $n_{\mathrm{val}}$ floors bind on both splits), pre-register a
+multiplicity penalty over the reachable, enumerated selection grid: the binning
+ladder gives $K_{\mathrm{bin}}$, the operator grid (op $\times\,\alpha\times
+L_{\mathrm{patch}}\times\,\mathrm{ref\_type}$) gives $K_{\mathrm{op}}$, both bounded
+before data. The confirmatory level is
+\begin{equation}
+\alpha_1' = \frac{0.05}{m'\cdot K_{\mathrm{bin}}\cdot K_{\mathrm{op}}},
+\label{eq:sialpha}
+\end{equation}
+folded into the Holm family. The deterministic choice rule (SI-1 iff the
+$n_{\mathrm{val}}$ floors are met on both splits, else SI-2) is frozen, so the power
+cost is known before lock.
+
+\paragraph{Selection-as-code.} The deliverable is a frozen, unit-tested
+\texttt{select\_binning($V_{\mathrm{sel}}$)} $\to$ (binning, selection\_event) and an
+operator freeze on $V_{\mathrm{sel}}$, each emitting the chosen value \emph{and} the
+selection event, so the SI correction is computable from the recorded event, not
+narrated.
+
+%==============================================================================
+\section{Experimental Setup and Pre-registered Analysis Plan}\label{sec:setup}
+%==============================================================================
+
+This section is the pre-registered, pre-data plan: frozen
+datasets/models/baselines/metrics, the analysis plan, the kill-gates, the
+leakage-safe nuisance estimation, and an exhibited feasible operating point.
+Nothing here is run; \texttt{server.authorized} remains \texttt{false}, and the run
+is additionally blocked at preflight while any required baseline is marked pending.
+
+\subsection{Frozen models, datasets, baselines, metrics}\label{sec:setup:frozen}
+
+\paragraph{Lead models (frozen; pinned at run authorization).}
+\texttt{Qwen2.5-7B-Instruct} \cite{qwen2025technical} and
+\texttt{Llama-3.1-8B-Instruct} \cite{grattafiori2024llama}, pre-registered by id
+with the exact weight revision pinned only at run authorization.
+
+\paragraph{Lead datasets (frozen; split-hash pinned at run authorization).}
+\textbf{TriviaQA} \cite{joshi2017triviaqa} for open-domain factuality and
+\textbf{HotpotQA} \cite{yang2018hotpotqa} for multi-hop QA; \textbf{TruthfulQA}
+\cite{lin2022truthfulqa} and \textbf{HaluEval} \cite{li2023halueval} inform the
+factuality protocol. Transfer-only sets are a HaluEval-style set and a diffusion-LM
+trace set.
+
+\paragraph{Baseline panel B0--B5 (run through the identical repair pipeline).}
+B0 \texttt{no\_op}; B1 TraceDet-selected \cite{tracedet2026diffusion};
+B2 entropy-selected (semantic entropy \cite{farquhar2024semantic} / output entropy);
+B3 probe-selected; B4 random same-class (the within-$g$ matched-null control);
+B5 oracle-selected (fixtures only). Additional AR detectors re-cast as localization
+selectors --- SelfCheckGPT \cite{manakul2023selfcheckgpt}, INSIDE
+\cite{chen2024inside}, RACE \cite{race2025reasoning} --- enter B2/B3-style with a
+declared, hashed, identical-across-baselines \texttt{segment\_adapter} (with
+\texttt{adapter\_hash}); without an audited adapter a baseline is AUROC-only and
+excluded from the $\Rhat$ table. Diffusion-native trace detectors (TraceDet
+\cite{tracedet2026diffusion}) otherwise appear only in the diffusion transfer table,
+where TraceDet also serves as B1. The run is \textbf{blocked} at preflight while any
+baseline carries \texttt{pending\_before\_server\_run}.
+
+\paragraph{Metrics.} Detection (secondary): AUROC, AUPRC, FPR@95TPR. Screening:
+OOD-deflated $\Udefl$ with Holm-corrected paired-bootstrap CIs. \textbf{Headline
+(certification):} the cross-example $\Rhat$ (Eq.~\ref{eq:R}) with two-way
+cluster-bootstrap CIs and class-block-permutation $p$; the repair utility cost
+$\Dutilr$; the positivity-excluded fraction; and the G9-NOV margin over B1--B3.
+
+\subsection{Sampling levels and the confirmatory family}\label{sec:setup:family}
+
+We separate sampling levels with distinct symbols: examples (the cluster margins of
+the two-way bootstrap), pairs $N_{\mathrm{pair}}$ (the U-statistic kernel
+evaluations, \emph{not} independent), seeds (floor $20$; reported as seed-variance),
+matched-null repair draws $R_{\mathrm{null}}$ (controlling the inner
+$O(1/\sqrt{R_{\mathrm{null}}})$ MC error of Lemma~\ref{lem:rident}a, default
+$\ge16$), repair-operator repeats $R_{\mathrm{int}}$ (default $\ge8$), and bootstrap
+resamples $B_{\mathrm{boot}}$ (default $\ge10{,}000$ \cite{efron1994bootstrap}). \textbf{Primary confirmatory cells (pre-registered, feasible).} The \emph{primary}
+confirmatory point is the two-cell set
+\texttt{Qwen2.5-7B-Instruct} $\times$ \{\textbf{TriviaQA}, \textbf{HotpotQA}\} ---
+one model family, two datasets. This 2-cell point is what the Holm confirmatory
+family below is sized for and what the headline $\Rhat$/G9/G9-NOV claim is
+adjudicated on. \textbf{Secondary (budget-gated).} The full 4-cell grid that
+\emph{adds} \texttt{Llama-3.1-8B-Instruct} on the same two datasets is
+\emph{secondary}: it is run only if the recomputed forward budget clears the
+ceiling (Sec.~\ref{sec:setup:feasible} / \texttt{redesign\_v5\_ar\_lead.yaml}
+\texttt{decision\_order}), and it tests cross-family generalization, not the
+primary claim. The
+Holm confirmatory family \cite{holm1979simple} comprises, at the locked primary
+settings, the preserved gates G1, G2, G7, G8, and the v5 gates G9 (per lead cell)
+and G9-NOV (per B1--B3 contrast) across the primary $\{\texttt{Qwen2.5-7B-Instruct}\}
+\times \{2\ \text{datasets}\}$ point; the second model size enters only the secondary,
+budget-gated grid. Operator and granularity are nuisance dimensions at a single
+primary setting. Under SI-1 ($K_{\mathrm{bin}}=K_{\mathrm{op}}=1$) the realized
+family size $m'$ and per-test $\alpha_1'=0.05/m'$ are recorded in the locked config;
+under SI-2, $\alpha_1'$ also pays $K_{\mathrm{bin}}K_{\mathrm{op}}$ (Eq.~\ref{eq:sialpha}).
+
+\subsection{Kill-gates}\label{sec:setup:gates}
+
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{G1 (necessity screening, preserved).} $\Udefl\ge0.05$, Holm CI lower
+  bound above $0.05$, on $\ge2$ lead datasets at \texttt{mask}, evaluated on the
+  deflated estimator. \emph{Fail $\Rightarrow$ no necessity; the localization is not
+  a screening candidate.}
+  \item \textbf{G2 (utility harm, preserved).} $\Dutil\le0.02$ (necessity) and
+  $\Dutilr\le0.02$ (repair). \emph{Fail $\Rightarrow$ reframe as abstention.}
+  \item \textbf{G7 / G8 (A4$^\star$ support \& operator-artifact, preserved, restated
+  under SI).} Graded-oracle recovery on Axis P/M/D and the upper-CI leakage bound
+  $B_{\mathrm{UCI}}<0.03$ (G7); SHAM-MASK / answer-adjacent CIs overlapping $0$ and a
+  $\texttt{displaced\_mass}$ slope that cannot manufacture $\Uhat_{\mathrm{inert}}\ge0.05$
+  (G8). Now also evaluated under the X$'$-detectable prediction.
+  \item \textbf{G9 (repair-transfer usefulness --- HEADLINE).} As stated in
+  Sec.~\ref{sec:method:g9}: the confirmatory $\Rhat$ Holm/SI-corrected
+  two-way-cluster-bootstrap CI lower bound $>m_R$, corroborated by the class-block
+  sign-flip diagnostic $p<\alpha_1'$, with $\Dutilr\le0.02$,
+  per-class positivity-excluded fraction $<0.5$, and source $\ne$ target. \emph{Fail
+  $\Rightarrow$ route per Sec.~\ref{sec:routing}.}
+  \item \textbf{G9-NOV (baseline-conditional novelty).} $\Rhat(\text{PROPOSED})-\max_b\{\Rhat(\text{B1..B3})\}>0$
+  (Holm/SI CI). \emph{Fail $\Rightarrow$ novelty downgrades to the certification
+  protocol; G9 may still stand.}
+  \item \textbf{G3 (transfer, preserved).} Held-out taxonomy retention $\ge0.80$.
+  \emph{Fail $\Rightarrow$ AR-only.}
+  \item \textbf{G4 (paper evidence, preserved).} $\ge\max(20,R_{\mathrm{power}})$
+  effective replicates, valid dependent-pair tests, effect sizes, CIs. \emph{Fail
+  $\Rightarrow$ diagnostic label.}
+\end{itemize}
+
+\subsection{Leakage-safe nuisance estimation and the $\sR$ power model}\label{sec:setup:power}
+
+Nuisance parameters that set the power budget are estimated \emph{only} on
+$V_{\mathrm{sel}}$/$V_{\mathrm{inf}}$, with named estimators, CIs, minimum
+$n_{\mathrm{val}}$, and a freeze-at-lock rule; the test split stays sealed.
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{$\sU$ (screening).} Sample sd of the within-example paired contrasts
+  $u_i$ (hard bound $\sU\le0.707$); power uses the upper CI via $\ge10{,}000$
+  resamples; minimum $n_{\mathrm{val}}\ge200$ paired examples per cell.
+  \item \textbf{$\kappa$, $\kappa^{\mathrm{rep}}$ (attenuation).} Cohen/Fleiss
+  agreement \cite{cohen1960coefficient,fleiss1971measuring} on the binary factuality
+  label, double-scored, for the within-example ($\kappa$) and cross-example
+  ($\kappa^{\mathrm{rep}}$) targets; the attenuation correction uses the lower CI
+  (Spearman tradition \cite{spearman1904attenuation}). Minimum $n_{\mathrm{val}}\ge300$
+  double-scored items per cell; a degenerate bootstrap blocks the lock.
+  \item \textbf{$\sR$ (certification power model --- DERIVED, not borrowed).} $\sU$ is
+  the wrong scale for a cross-example U-statistic. We derive
+  \begin{equation}
+  \mathrm{Var}(\Rhat)\;\approx\;\frac{\zeta_{10}}{n_{\mathrm{source}}}+\frac{\zeta_{01}}{n_{\mathrm{target}}}
+  \;+\;\frac{1}{N_{\mathrm{pair}}}\Big(\frac{\sigma_{\mathrm{MC}}^2}{R_{\mathrm{null}}}+\frac{\sigma_{\mathrm{op}}^2}{R_{\mathrm{int}}}\Big),
+  \label{eq:rvar}
+  \end{equation}
+  where the kernel $g_{ij}$ is \emph{ordered/asymmetric} (source role $\ne$ target
+  role), so the first-order projection has \textbf{two} parts: $\zeta_{10}$, the
+  variance of the \emph{source} projection $\Eop[g_{ij}\mid i]$, divided by the source
+  cluster count $n_{\mathrm{source}}$; and $\zeta_{01}$, the variance of the
+  \emph{target-margin} projection $\Eop[g_{ij}\mid j]$, divided by $n_{\mathrm{target}}$.
+  Both projections are retained (the symmetric shorthand $(4/n_{\mathrm{eff}})\zeta_1$
+  collapsed the two margins and understated the asymmetric-kernel variance; it is no
+  longer used). $\sigma_{\mathrm{MC}}^2/R_{\mathrm{null}}$ is the nested matched-null MC
+  variance and $\sigma_{\mathrm{op}}^2/R_{\mathrm{int}}$ the repair-operator
+  stochasticity. Class imbalance enters through $n_{\mathrm{source}}/n_{\mathrm{target}}$
+  and a pre-registered design-effect $D_{\mathrm{eff}}\ge1$; $n_{\mathrm{eff}}=
+  \min(n_{\mathrm{source}},n_{\mathrm{target}})$ is retained for design-effect
+  bookkeeping only.
+\end{itemize}
+The certification power count is
+\begin{equation}
+R_{\mathrm{power}} = \Big\lceil\big(z_{1-\alpha_1'/2}\,\sigma_{R,\mathrm{hi}}/m_R\big)^2\,D_{\mathrm{eff}}\Big\rceil,
+\label{eq:rpower}
+\end{equation}
+with $\sigma_{R,\mathrm{hi}}$ the upper CI of $\sR$ on $V_{\mathrm{sel}}$, computed in
+a NEW estimator (the v4 necessity power count is \emph{not} reused). All of
+$\zeta_{10}$, $\zeta_{01}$, $\sigma_{\mathrm{MC}}$, $\sigma_{\mathrm{op}}$,
+$D_{\mathrm{eff}}$, $n_{\mathrm{source}}$, $n_{\mathrm{target}}$ are
+\textsc{data\_needed}, estimated at lock; Eq.~\ref{eq:rvar}/\ref{eq:rpower} are the
+frozen identities the locked config evaluates.
+
+\subsection{Exhibited feasible operating point (re-checked, not assumed)}\label{sec:setup:feasible}
+
+The v4 necessity design exhibited one feasible
+$(n,\text{cells},\kappa,c_{\mathrm{fwd}})$ at the within-example scale
+(\emph{formula evaluation, not evidence}): at $\kappa=0.92$
+($2\kappa-1=0.84$, $U_{\mathrm{target}}=0.05/0.84=0.0595$), $\sigma_{\mathrm{hi}}=0.30$,
+$m=8$ ($\alpha_1=0.00625$, $z=2.734$), inflation $1.125$, the MDE is
+$n\ge(2.734\cdot0.30/0.03)^2\cdot1.125=841$, with the budget identity
+$\text{cells}\cdot n\cdot 18\cdot c_{\mathrm{fwd}}\le14$ GPU-hr giving
+$c_{\mathrm{fwd}}\le4.57\times10^{-4}$. \textbf{For G9 this point is re-checked, not
+assumed}, against (i) the \emph{new} variance scale $\sR$ (Eq.~\ref{eq:rvar}), and
+(ii) the \emph{new} forward count per target (one localized-repair forward, plus
+$R_{\mathrm{null}}$ matched-null-repair forwards, plus $R_{\mathrm{int}}$
+repair-operator repeats), persisted as \texttt{forwards\_per\_example}. If the
+recomputed $R_{\mathrm{power}}$ or budget exceeds the v4 point, the pre-registered
+decision order (request a budget line $\to$ reduce cells $\to$ reduce
+$R_{\mathrm{null}}/R_{\mathrm{int}}$ to the variance-floored minimum) applies and is
+recorded. No number here is fabricated; this is the frozen budget identity
+re-evaluated at the new family size and variance model, and the realized $m'$,
+$K_{\mathrm{bin}}$, $K_{\mathrm{op}}$, $z$, $\sigma_{R,\mathrm{hi}}$,
+\texttt{forwards\_per\_example}, and re-checked feasible point are written into the
+locked config.
+
+\subsection{Frozen contract and its unit harness}\label{sec:setup:harness}
+
+The estimand is enforced by a frozen contract (\texttt{CIURecord},
+\texttt{validate\_ciu\_record}, \texttt{ciu\_gate}, \texttt{baseline\_readiness})
+plus pure-Python machinery. The \emph{preserved} v4 machinery (the graded oracle, the
+OOD-deflation correction, the leakage-slope regression, the $\sU/\kappa/R_{\mathrm{power}}$
+estimators) is implemented and frozen. The \emph{v5} machinery --- the repair-gain
+$g_{ij}$ and U-statistic $\Rhat$, the two-way cluster bootstrap, the class-block
+permutation null, the H\'ajek projection cross-check, the transport map $T$, the
+selection-as-code binning/operator freeze, the $\sR$ estimator and
+\texttt{r\_power\_repair}, and the adversarial Axis X$'$ with NC-1/NC-2 --- is
+\emph{implemented as do-not-run pure-Python} and exercised by a green unit
+harness (113 passing tests, no model, no GPU) that asserts: $\Rhat$ certifies a
+transferable repair and
+\emph{fails} a non-transferable one; a B4 also-passing (generic repair) routes to
+\textsf{diagnostic}; G9-NOV passes only when PROPOSED out-transfers B1--B3; the
+two-way cluster bootstrap and class-block permutation give consistent CIs and recover
+the H\'ajek variance on synthetic fixtures; positivity exclusion is accounted; Axis
+X$'$-detectable controls trip before $\Rhat$ while X$'$-blind controls stay silent as
+$\Rhat\to0$ (Eq.~\ref{eq:p5}); NC-2 source-swap invariance holds; and SI-1/SI-2 path
+selection with $K_{\mathrm{bin}}/K_{\mathrm{op}}$ Holm folding reproduces the
+re-checked feasible point. The contract refuses to validate any record with
+\texttt{server\_authorized=True}. \textbf{The pure-Python v5 harness is green; no
+Stage-1-ready label is claimed until the authorized run executes.}
+
+%==============================================================================
+\section{Stage-2 Decision Routing}\label{sec:routing}
+%==============================================================================
+
+Each way the central claim can lose routes to a distinct, honest conclusion. The
+necessity-only downgrade is \emph{conditional and powered}, not a default escape
+hatch.
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{R1 (full certification).} G9 + G9-NOV + the Axis X$'$ predictions
+  pass $\Rightarrow$ the headline causal repair-transfer claim, scoped by A5--A9.
+  \item \textbf{R2 (necessity + protocol).} G9 fails but the certification
+  \emph{protocol} (matched-null + selective inference) is itself a validated
+  contribution and B1--B3 lose $\Rightarrow$ report the protocol as the contribution
+  (weaker but honest).
+  \item \textbf{R3 (necessity-only downgrade --- GATED).} Report the screening-level
+  necessity paper \emph{only if} the G9 null is (i) \emph{powered}
+  ($n\ge R_{\mathrm{power}}$ of Eq.~\ref{eq:rpower}, so the null is informative, not
+  under-powered) \emph{and} (ii) \emph{theory-informative} (a pre-registered
+  mechanism prediction, e.g.\ ``single-span training-free repairs do not transfer for
+  class $c$ because the error is distributed,'' tied to the multi-cause Axis M). A
+  null that is under-powered or mechanism-silent is \emph{not} publishable as a
+  finding; it is ``inconclusive --- insufficient power,'' routed to a budget request.
+  \item \textbf{R4 (unsound).} The X$'$-blind prediction fails (controls silent,
+  $\Rhat$ stays certified under the collinear confounder) $\Rightarrow$ certification
+  is \emph{withdrawn}; report the soundness limitation. No causal-usefulness claim.
+\end{itemize}
+
+%==============================================================================
+\section{Results}\label{sec:results}
+%==============================================================================
+
+\noindent\textbf{No empirical result is reported in this Stage-1 submission.} Every
+slot below is a \textsc{data\_needed} placeholder describing exactly what will be
+reported after the authorized run executes the pre-registered plan of
+Sec.~\ref{sec:setup}. No number in this section is measured; none is fabricated. The
+pre-registered predictions (P5 adversarial soundness; P6 repair-transfer headline;
+and the preserved P1--P4) are decided by the kill-gates.
+
+\begin{table}[h]
+\centering
+\caption{\textbf{[DATA\_NEEDED]} Headline repair-transfer certification (gate G9).
+The \emph{primary confirmatory} cells are the pre-registered feasible 2-cell point,
+Qwen2.5-7B-Instruct $\times\{$TriviaQA, HotpotQA$\}$; the full 4-cell grid (adding
+Llama-3.1-8B-Instruct) is \emph{secondary and budget-gated} and tests cross-family
+generalization, not the primary claim (see \texttt{reports/run\_packet.md} \S2). For
+each cell, the cross-example $\Rhat$ (Eq.~\ref{eq:R}) with its two-way (source,target)
+cluster-bootstrap $95\%$ CI, the class-block-permutation $p$, the repair utility cost
+$\Dutilr$, the per-class positivity-excluded fraction, and the G9 verdict. To be
+populated only after the authorized run; the Holm/SI-corrected CI lower bound must
+clear $m_R$ AND the permutation $p<\alpha_1'$ for G9.}
+\label{tab:g9}
+\begin{tabular}{lcccccc}
+\toprule
+Cell (model $\times$ dataset) & $\Rhat$ & 95\% CI (2-way) & perm.\ $p$ & $\Dutilr$ & pos.\ excl. & G9 \\
+\midrule
+\multicolumn{7}{l}{\emph{Primary confirmatory (pre-registered feasible 2-cell point)}} \\
+Qwen2.5-7B $\times$ TriviaQA   & \dn & \dn & \dn & \dn & \dn & \dn \\
+Qwen2.5-7B $\times$ HotpotQA   & \dn & \dn & \dn & \dn & \dn & \dn \\
+\midrule
+\multicolumn{7}{l}{\emph{Secondary / budget-gated (4-cell grid, cross-family)}} \\
+Llama-3.1-8B $\times$ TriviaQA & \dn & \dn & \dn & \dn & \dn & \dn \\
+Llama-3.1-8B $\times$ HotpotQA & \dn & \dn & \dn & \dn & \dn & \dn \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{\textbf{[DATA\_NEEDED]} Baseline-conditional novelty (gate G9-NOV).
+Repair-transfer $\Rhat$ for the baseline panel B0--B5 and PROPOSED, all through the
+\emph{identical} repair pipeline, and the Holm/SI-corrected CI of
+PROPOSED~$-\max\{$B1,B2,B3$\}$. To be populated after the run; PROPOSED must
+out-transfer the best detector-selected localization (lower CI $>0$). A baseline that
+matches or beats PROPOSED is reported as a novelty downgrade, not an identification
+failure.}
+\label{tab:g9nov}
+\begin{tabular}{lcc}
+\toprule
+Selector (through identical repair) & $\Rhat$ (95\% CI) & note \\
+\midrule
+B0 \texttt{no\_op} floor                       & \dn & target unedited \\
+B1 TraceDet-selected                           & \dn & IB sub-trace span \\
+B2 entropy/semantic-entropy-selected           & \dn & uncertainty peak \\
+B3 probe-selected                              & \dn & latent linear probe \\
+B4 random same-class                           & \dn & within-$g$ matched null \\
+B5 oracle-selected                             & \dn & planted; upper bound \\
+PROPOSED (CIU selector $\Sstar$)               & \dn & headline \\
+\midrule
+PROPOSED $-\max\{$B1,B2,B3$\}$ (G9-NOV)        & \dn & Holm/SI CI must clear $0$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{\textbf{[DATA\_NEEDED]} Adversarial soundness (prediction P5, Axis X$'$).
+The cross-example $\Rhat$ and the leakage/OOD controls (G7/G8) as functions of
+confounding strength $\xi\in\{0,0.25,0.5,0.75,1\}$, in the X$'$-detectable and
+X$'$-blind regimes. To be populated after the run. \emph{Registered prediction:}
+X$'$-detectable --- controls move off zero before $\Rhat$ certifies; X$'$-blind ---
+controls stay silent while $\Rhat\to0$ as $\xi\to1$ (Eq.~\ref{eq:p5}). A
+control-silent-yet-certified result in X$'$-blind withdraws certification (route R4).}
+\label{tab:p5}
+\begin{tabular}{llcccc}
+\toprule
+Regime & quantity & $\xi{=}0$ & $\xi{=}0.5$ & $\xi{=}1$ & verdict \\
+\midrule
+X$'$-detectable & $\Rhat$                       & \dn & \dn & \dn & \dn \\
+X$'$-detectable & leakage/OOD controls (G7/G8)  & \dn & \dn & \dn & \dn \\
+X$'$-blind      & $\Rhat$ (must $\to0$)         & \dn & \dn & \dn & \dn \\
+X$'$-blind      & controls (must stay silent)   & \dn & \dn & \dn & \dn \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{\textbf{[DATA\_NEEDED]} Screening necessity (gate G1/G2) and transfer (gate
+G3). The OOD-deflated $\Udefl$ at \texttt{mask} with Holm CI (the screening filter
+feeding G9), the utility drop $\Dutil$, and the held-out taxonomy retention for the
+reasoning-LRM and diffusion-LM ports. The \emph{primary confirmatory} G1/G2 rows are
+the pre-registered feasible 2-cell point, Qwen2.5-7B-Instruct $\times\{$TriviaQA,
+HotpotQA$\}$; the Llama-3.1-8B rows are \emph{secondary and budget-gated} (the full
+4-cell grid, \texttt{reports/run\_packet.md} \S2). To be populated after the run.}
+\label{tab:g1g3}
+\begin{tabular}{lccc}
+\toprule
+Cell / paradigm & $\Udefl$ (95\% CI) / retention & $\Dutil$ & verdict \\
+\midrule
+\multicolumn{4}{l}{\emph{Primary confirmatory (pre-registered feasible 2-cell point)}} \\
+Qwen2.5-7B $\times$ TriviaQA (G1/G2)   & \dn & \dn & \dn \\
+Qwen2.5-7B $\times$ HotpotQA (G1/G2)   & \dn & \dn & \dn \\
+\midrule
+\multicolumn{4}{l}{\emph{Secondary / budget-gated (4-cell grid, cross-family)}} \\
+Llama-3.1-8B $\times$ TriviaQA (G1/G2) & \dn & \dn & \dn \\
+Llama-3.1-8B $\times$ HotpotQA (G1/G2) & \dn & \dn & \dn \\
+\midrule
+reasoning-LRM transfer (G3)            & \dn & --- & \dn \\
+diffusion-LM transfer (G3)             & \dn & --- & \dn \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\linewidth}{\centering\vspace{1.2em}\textbf{[DATA\_NEEDED]
+Figure}\\[4pt]\small
+\emph{$\Rhat$ vs.\ confounding strength $\xi$, X$'$-detectable vs.\ X$'$-blind
+(prediction P5).} The realized cross-example $\Rhat$ (with two-way cluster-bootstrap
+band) and the leakage/OOD control slopes overlaid on the pre-registered curves:
+X$'$-detectable controls rise before $\Rhat$ certifies; X$'$-blind controls stay flat
+while $\Rhat\to0$. \emph{The pre-registered curves are fixed by the design and produced
+by the frozen Axis~X$'$ fixtures (no paper numbers); only the realized overlay is
+\textsc{data\_needed}.}
+\vspace{1.2em}}}
+\caption{Placeholder for the adversarial-soundness figure (prediction P5 / gate G9 vs.\ controls).}
+\label{fig:p5}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\linewidth}{\centering\vspace{1.2em}\textbf{[DATA\_NEEDED]
+Figure}\\[4pt]\small
+\emph{Graded-oracle screening curves (gate G7.i, preserved P4).} Realized $\Uhat$
+along Axis~P (vs.\ $\beta\dpos$; expected linear, crossing the $0.03$ floor at the
+planted point), Axis~M (vs.\ $m_c$; expected $\approx1/m_c$), and Axis~D (vs.\
+distractor strength; flat-at-zero for the detector), overlaid on the pre-registered
+curves. \emph{Pre-registered curves fixed by the frozen oracle fixtures; only the
+realized overlay is \textsc{data\_needed}.}
+\vspace{1.2em}}}
+\caption{Placeholder for the graded-identification figure (G7.i / prediction P4).}
+\label{fig:oracle}
+\end{figure}
+
+%==============================================================================
+\section{Limitations}\label{sec:limitations}
+%==============================================================================
+
+We carry the design's caveats forward honestly.
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{Repair-transfer may be the wrong difficulty.} $\Rhat$ could be
+  $\approx0$ for most classes if single-span training-free repairs rarely transfer.
+  This is \emph{not} auto-publishable as ``still a complete paper''; it is
+  publishable only via R3 --- a \emph{powered} ($n\ge R_{\mathrm{power}}$) and
+  \emph{theory-informative} (pre-registered mechanism) null --- else it is
+  ``inconclusive, request budget.''
+  \item \textbf{Construct validity: certification is sufficient, not necessary --- and
+  neither may be reliable.} A segment may be causally necessary in place yet not
+  single-span-repairable, and a generic repair may transfer for non-causal reasons; we
+  drop ``iff'' and scope the claim to the registered design (A5--A9). A skeptical
+  reviewer can press further: the chosen operationalization (``repair-transfer $=$
+  causal usefulness'') is neither necessary nor reliably sufficient for the construct,
+  so even a clean R1 (full certification) demonstrates a narrow, operator-/transport-/
+  class-partition-dependent phenomenon, not the general claim a title might imply. We
+  accept this scoping explicitly; the screening $\Uhat$ captures necessity that $\Rhat$
+  may miss, and we do not claim the construct beyond the registered operators.
+  \item \textbf{The detector contrast is empirical and can lose.} If a
+  detector-selected span (B1--B3) out-transfers PROPOSED through the identical
+  pipeline (G9-NOV fails), the contribution shrinks to ``the matched-null +
+  selective-inference certification protocol'' --- a real but lateral,
+  infrastructure-grade contribution rather than ``causal beats correlational.'' This is
+  an acceptance risk we accept and state up front, not after the fact.
+  \item \textbf{The confirmatory test does not borrow validity from A6.} The G9
+  significance burden is carried by the two-way cluster-bootstrap CI, which assumes
+  neither a sharp null nor source-block sign-symmetry. The class-block sign-flip is a
+  \emph{corroborating diagnostic} for A6 within-class exchangeability, not the
+  confirmatory test: matched-null centring plus A6 give mean-zero plus exchangeability,
+  which are strictly weaker than the distributional sign-symmetry a sign flip would
+  need, so we do \emph{not} claim it is exact for $R=0$ (the earlier
+  ``exact-by-construction under A6'' assertion is withdrawn). The primary $p$-value
+  therefore does not borrow validity from the very A6 premise it helps probe.
+  \item \textbf{A8 (reference validity) is the one substantive cross-example
+  assumption, and it is non-identifiable on real AR-LLM traces.} Axis X$'$-blind is,
+  to our knowledge, the first oracle in this line that \emph{provably can fail} (a
+  confounder collinear with the controls); the paper claims only ``$\Rhat$ collapses
+  on the planted X$'$-detectable and X$'$-blind confounder classes,'' explicitly
+  \emph{not} ``robust to all confounding.'' We state the sharper concession plainly:
+  the X$'$-blind regime discharges A8 only on a \emph{synthetic} generator whose
+  $\Rhat$ collapse ($\text{transferred}=\tau_0(1-\xi)$) and whose control silence are
+  \emph{hand-coded identities}, so this ``provable failure regime'' is a correctness
+  fixture (a unit test promoted to a falsification), \emph{not} an adjudication of the
+  real-data causal question. On real AR-LLM traces A8 remains non-identifiable; the
+  oracle bounds the \emph{method's} behaviour under a known confounder, it does not
+  certify A8 holds in the wild. This is the single substantive premise a skeptical
+  reviewer may decline to credit, and we do not claim the oracle removes it.
+  \item \textbf{The headline causal claim is unfalsifiable at Stage-1 (no data yet).}
+  Every empirical slot is \textsc{data\_needed} and \texttt{server.authorized} is
+  \texttt{false}, so this submission asks acceptance of the \emph{protocol} and its
+  closed-form identities over synthetic fixtures, not of a certified causal result. A
+  top venue may reasonably decline to credit the causal \emph{headline} (as opposed to
+  the certification protocol) before any data exists. We state this as an accepted
+  acceptance risk, not a resolved one: what is falsifiable \emph{now} is the machinery
+  (the green do-not-run harness); the causal claim is falsifiable only after the
+  authorized run.
+  \item \textbf{Positivity may be low, and the anchor $T$ is matched on the covariates
+  the estimand nets out (self-defined-ruler risk).} A7 is measured and reported;
+  classes with excluded-pair fraction $\ge0.5$ are routed to ``insufficient
+  positivity,'' not counted as a null. The anchor map $T$ is locked to the same
+  $\dpos$ proximity grid and exact budget $k$ that define the matched-null pool
+  $\Pij$, so PROPOSED and its B4 control are matched precisely on the structural
+  covariates $\Rhat$ subtracts. This (a) tightens the ``self-defined ruler'' critique
+  --- the contrast is sharp but narrow --- and (b) risks low positivity, an empirical
+  unknown that could route many classes to ``insufficient positivity'' and silently
+  shrink the certifiable population, capping power and external validity. We report A7
+  per class rather than assuming it, but the certifiable population size is genuinely
+  unknown pre-data.
+  \item \textbf{U-statistic inference is heavier and the SI correction is
+  conservative.} The two-way cluster bootstrap is $O(B\cdot N_{\mathrm{pair}})$ pure
+  CPU on already-collected $g_{ij}$ with a closed-form H\'ajek cross-check; the
+  SI-1/SI-2 path is chosen by a deterministic rule known before lock, so the power
+  cost is known, not discovered. $\sR$ is \textsc{data\_needed}, not assumed.
+  \item \textbf{The graded oracle is synthetic.} It demonstrates correct degradation
+  on a templated generator with planted ground truth; it does not show that real AR
+  traces share the same $\tau$ structure. It is a correctness fixture (no paper
+  numbers).
+  \item \textbf{Repair forwards raise compute.} Folded into Eq.~\ref{eq:rpower}'s
+  forward surcharge and the v4 decision order; the locked config records it.
+  \item \textbf{Scope and evidence.} A CI-clearing $\Rhat$ is consistent with the
+  existence of localizations whose repair transfers within a class, never ``all
+  hallucinations are causally explained.'' Replay is expensive, so this is offline
+  causal \emph{auditing}, not a live decoder. \textbf{No empirical evidence exists in
+  this submission}: the only numerics are the closed-form / quadrature checks,
+  explicitly labelled ``formula evaluation, not evidence,'' and
+  \texttt{server.authorized} remains \texttt{false}.
+\end{itemize}
+
+%==============================================================================
+\section{Conclusion}\label{sec:conclusion}
+%==============================================================================
+
+We have replaced ``honest measurement of a self-defined contrast'' with a
+\emph{certification}: a trace segment is repair-transfer-certified for a
+hallucination class when a training-free, source-derived localized repair
+\emph{policy} recovers held-out in-class targets beyond a matched-null repair. The
+cross-example statistic $\Rhat$ is the headline; the within-example matched-null
+necessity statistic $\Uhat$ is the screening filter beneath it. We name the
+source$\to$target transport map and the five assumptions (A5--A9) under which $\Rhat$
+is an identified causal estimand, prove an identification lemma that separates the
+assumption-free matched-null subtraction from the assumption-loaded causal
+interpretation, and make the inference \emph{valid for dependent pairs} (a within-class
+U-statistic with a confirmatory two-way cluster bootstrap CI, corroborated by a
+class-block sign-flip diagnostic) and the verdicts \emph{selective-inference correct}
+(every data-adaptive choice is a paid-for selection event). The detector contrast is empirical, not rhetorical: a baseline panel
+runs detector-selected localizations through the identical repair pipeline, and our
+novelty is conditional on out-transferring them. An adversarial oracle includes a
+\emph{provable} control-failure regime where $\Rhat$ must collapse or the method is
+declared unsound. The full analysis plan, hardened routing, and an exhibited,
+re-checked feasible operating point are pre-registered; the preserved CIU machinery is
+implemented and frozen, and the v5 repair-transfer machinery is likewise
+\emph{implemented as do-not-run pure-Python}, covered by the green unit harness
+(113 passing tests, no model, no GPU). Empirical validation follows the
+pre-registered, authorized run; until then \texttt{server.authorized} remains
+\texttt{false}, no run is executed, and every result is a \textsc{data\_needed}
+placeholder.
+
+%==============================================================================
+\bibliographystyle{plain}
+\bibliography{references}
+%==============================================================================
+
+\end{document}

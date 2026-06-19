@@ -1,4 +1,13 @@
 project: tracecausal
+# Baseline boundary (phase2b review item 6): every comparator below is INCLUDED as
+# an adapted segment-level baseline OR carries an explicit exclusion justification.
+# The defended claim is segment-level intervention-usefulness, so each output/trace
+# detector is ADAPTED to score trace SEGMENTS (re-scored on U_hat, ciu_scored=true
+# in the experiment config) rather than compared in its native output-level form.
+# Each adapted baseline carries a `segment_adaptation:` field stating how its native
+# signal is mapped to a per-segment score. Pre-registered; pin exact revision/hash
+# at run authorization.
+segment_adaptation_policy: all_output_and_trace_detectors_rescored_to_segment_level_u_hat
 baselines:
   random_segment:
     family: sanity
@@ -31,6 +40,7 @@ baselines:
     tuning_grid: sample_budget_and_cluster_threshold_validation_only
     input_access: sampled_outputs
     fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: per_segment_semantic_entropy_over_segment_conditioned_resamples
   output_signature_detector:
     family: learned_output_signature
     required: true
@@ -41,6 +51,7 @@ baselines:
     tuning_grid: validation_only_detector_hparams
     input_access: output_probability_signature
     fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: signature_score_attributed_to_segment_via_segment_localized_logits
   reasoning_consistency_detector:
     display_name: RACE
     family: reasoning_trace
@@ -52,6 +63,7 @@ baselines:
     tuning_grid: validation_only_signal_weights
     input_access: reasoning_traces
     fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: race_consistency_signal_computed_per_reasoning_segment
   diffusion_trace_detector:
     display_name: TraceDet
     family: diffusion_trace
@@ -63,6 +75,28 @@ baselines:
     tuning_grid: validation_only_subtrace_selection
     input_access: diffusion_denoising_trace
     fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: subtrace_score_mapped_to_denoising_segment
+    paradigm_scope: diffusion_transfer_only
+    # The TraceDet DETECTOR (diffusion denoising-trace classifier) is excluded from the
+    # AR-lead R_hat table; it appears only in the diffusion transfer study. SEPARATELY,
+    # a TraceDet-DERIVED AR span-selection adapter (its IB sub-trace selection criterion
+    # re-cast onto AR-LLM traces, refinement 3) enters the AR-lead REPAIR PANEL as B1.
+    # These are two distinct artifacts; the detector is not imported cross-paradigm, the
+    # adapter is a span selector run through the identical repair_ops pipeline.
+    detector_ar_lead_inclusion: excluded_from_ar_lead_table
+    ar_span_adapter_role: B1_in_ar_lead_repair_panel   # repair_ops.tracedet_ar_span_adapter (refinement 3)
+    ar_span_adapter_selector: tracecausal.repair_ops.tracedet_ar_span_adapter
+    ar_lead_exclusion_justification: >-
+      The TraceDet DETECTOR operates on diffusion denoising traces; the frozen lead
+      paradigm is AR-LLM (Qwen2.5-7B-Instruct + Llama-3.1-8B-Instruct), so the detector
+      is retained ONLY in the diffusion transfer study, never imported as a detector
+      into the AR-lead table (baseline_contract.md forbids cross-paradigm detector
+      import without a separate paradigm label). What enters the AR-lead repair panel is
+      NOT the diffusion detector but a TraceDet-derived AR span-selection adapter
+      (B1): its information-bottleneck sub-trace selection criterion re-cast as an AR
+      localization selector and fed through the identical repair_ops pipeline. This is
+      the single, consistent AR-lead role for TraceDet (cf. paper Sec. Related / B1).
+      Pre-registered; pin revision at run authorization.
   tdgnet_trace_detector:
     display_name: TDGNet
     family: diffusion_trace
@@ -74,6 +108,14 @@ baselines:
     tuning_grid: validation_only_graph_hparams
     input_access: diffusion_trace_graph
     fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: graph_node_scores_aggregated_to_trace_segment
+    paradigm_scope: diffusion_transfer_only
+    ar_lead_inclusion: excluded_from_ar_lead_table
+    ar_lead_exclusion_justification: >-
+      TDGNet is a graph-style diffusion-trace detector; same paradigm scoping as
+      TraceDet. Segment-adapted baseline in the diffusion transfer study only,
+      excluded from the AR-lead table. Pre-registered; pin revision at run
+      authorization.
   selfcheckgpt:
     display_name: SelfCheckGPT
     family: sampling_consistency
@@ -85,6 +127,7 @@ baselines:
     tuning_grid: validation_only_nli_threshold
     input_access: sampled_outputs
     fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: nli_consistency_score_computed_over_segment_aligned_resamples
   inside_detector:
     display_name: INSIDE
     family: internal_state_uncertainty
@@ -96,3 +139,4 @@ baselines:
     tuning_grid: validation_only_internal_signal_threshold
     input_access: hidden_states_if_available
     fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: internal_eigenscore_computed_over_segment_localized_hidden_states

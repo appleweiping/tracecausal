@@ -1,0 +1,247 @@
+project: tracecausal
+status: design_frozen_stage1_RR
+run_tier: paper_candidate
+redesign: v5
+# Additive freeze of the v5 cross-example repair-transfer certification per
+# docs/redesign/REDESIGN_v5.md. Copies the v4 AR-LLM lead (redesign_v4_ar_lead.yaml)
+# and ADDS the v5 repair-transfer / selective-inference / Axis X' surfaces. Changes
+# no v4 meaning. NO SERVER RUN AUTHORIZED. server.authorized stays false.
+#
+# Phase-B gating rule (MF-8): this is design_frozen, NOT stage1_ready. Stage-1
+# readiness is earned only when every REDESIGN_v5 §9 module is implemented and the
+# harness is green. Every empirical slot remains DATA_NEEDED; the only numerics are
+# closed-form margin/variance/feasibility identities ("formula evaluation, not
+# evidence"). ZERO fabricated numbers.
+claim: >-
+  a trace segment is repair-transfer-certified for a hallucination class when a
+  training-free, source-derived localized repair policy recovers held-out in-class
+  targets beyond a matched-null repair, at bounded edit budget and utility cost.
+
+# --- frozen AR-LLM lead paradigm (preserved from v4) ------------------------
+lead_paradigm: autoregressive_llm
+model_families:
+  - autoregressive_llm        # frozen lead
+transfer_only_paradigms:
+  - reasoning_trace_lrm
+  - diffusion_llm
+
+# --- FROZEN lead models + datasets (preserved from v4; the two-family point) --
+lead_models:
+  - id: ar_lead_qwen
+    family: qwen2.5
+    paradigm: autoregressive
+    role: lead_family_1
+    checkpoint: Qwen/Qwen2.5-7B-Instruct   # pre-registered; pin exact revision/hash at run authorization
+    revision: pin_exact_revision_at_run_authorization
+    prompt_template_hash: pending_before_run
+  - id: ar_lead_llama
+    family: llama3.1
+    paradigm: autoregressive
+    role: lead_family_2
+    checkpoint: meta-llama/Llama-3.1-8B-Instruct  # pre-registered; pin exact revision/hash at run authorization
+    revision: pin_exact_revision_at_run_authorization
+    prompt_template_hash: pending_before_run
+datasets:
+  lead:
+    - triviaqa            # factuality; pre-registered; pin split-hash at run authorization
+    - hotpotqa            # multi-hop; pre-registered; pin split-hash at run authorization
+  transfer:
+    - haleval_style
+    - diffusion_lm_trace_style
+  split_policy: frozen_train_valid_test_hash_required_before_run
+  leakage_check: required_before_run
+
+baselines:
+  - random_segment
+  - output_entropy
+  - semantic_entropy
+  - output_signature_detector
+  - reasoning_consistency_detector
+  - selfcheckgpt
+  - inside_detector
+  - diffusion_trace_detector
+ciu_scored: true              # all output-only baselines re-scored (U_hat screening + R_hat headline)
+
+seeds:
+  paper_minimum: 20           # floor preserved (>= 20)
+  manifest: configs/seeds/paper_20.txt
+
+metrics:
+  detection:
+    - auroc
+    - auprc
+    - fpr_at_95_tpr
+  intervention:
+    - factuality_delta
+    - answer_accuracy_delta
+    - utility_delta
+  repair_transfer:            # v5 headline metrics
+    - r_hat                   # cross-example repair-transfer estimand (Eq. R)
+    - repair_factuality_gain
+    - repair_utility_delta
+
+# --- v5 cross-example repair-transfer (REDESIGN_v5 §4) -----------------------
+repair_transfer:
+  margin_design: DATA_NEEDED          # m_R0, pinned on V_sel (Eq. m-R); not asserted
+  max_utility_drop: 0.02              # G9 bounded repair utility cost (REPAIR_UTILITY_BOUND)
+  transport_variant: C                # source-derived repair POLICY (not a state), §4.2
+  positivity_excluded_max_per_class: 0.5   # A7; above this -> insufficient positivity
+  estimand: within_class_source_neq_target_u_statistic   # Eq. R
+  variance_primary: two_way_source_target_cluster_bootstrap   # MF-4 CONFIRMATORY
+  variance_crosscheck: hajek_projection_both_zeta_10_and_zeta_01  # refinement 5
+  null_test: class_block_source_block_signflip_diagnostic  # G9-FIX: DIAGNOSTIC corroborating the CI (probes A6 sign-symmetry); NOT exact for R=0, NOT confirmatory
+  nested_matched_null_mc: target_clustered_covariance  # refinement 6
+  common_support_rule: ipw_or_common_support_set       # refinement 4 (PROPOSED vs baselines same estimand)
+  g9_nov_inference: simultaneous_correlated_bootstrap  # refinement 8 (CI for data-selected max baseline)
+
+# --- v5 G9 baseline panel B0..B5 (REDESIGN_v5 §4.3) --------------------------
+baseline_panel:
+  - id: B0
+    kind: no_op_floor                 # target unedited
+  - id: B1
+    kind: tracedet_selected           # TraceDet -> AR span adapter (refinement 3), same repair_ops
+  - id: B2
+    kind: entropy_selected            # LN-Entropy / perplexity peak, same pipeline
+  - id: B3
+    kind: probe_selected              # latent linear probe, same pipeline
+  - id: B4
+    kind: random_same_class           # matched-null repair control (within g_ij)
+  - id: B5
+    kind: oracle_selected             # planted ground truth (oracle fixtures only; upper bound)
+  - id: PROPOSED
+    kind: ciu_selector                # the CIU selector's S*
+g9_nov_contrast: r_hat_proposed_minus_max_of_B1_B2_B3   # detector contrast made empirical
+
+# --- v5 selective inference (REDESIGN_v5 §6) ---------------------------------
+selection_split: required             # SI-1 primary: V_sel / V_inf / test disjoint
+operator_freeze: V_sel                # OS-1: rho/alpha/L_patch/budget/ref_type/w_c frozen on V_sel
+k_bin_ladder: [1, 2, 4, 8, 16]        # Delta_pos coarsening ladder (finest first); bounds K_bin
+displaced_mass_bins: [0.0, 0.05, 0.1, 0.2, 0.4, 1.0]   # carried from v4
+k_op_grid:                            # OS-2 operator grid; cardinality = K_op
+  op: [patch, replay]
+  alpha: [0.1, 0.25, 0.5, 0.75, 1.0]  # PATCH_RHO_LEVELS
+  ref_type: [factual, neutral]
+si_path_rule: SI1_if_n_val_floors_met_on_both_splits_else_SI2   # deterministic (§6.2)
+holm_alpha_identity: "alpha_1' = 0.05 / (m' * K_bin * K_op)"     # Eq. SI-ALPHA
+
+# --- v5 adversarial oracle Axis X' (REDESIGN_v5 §7) --------------------------
+adversarial_oracle:
+  axis: x_prime
+  regimes: [detectable, blind]
+  xi_grid: [0.0, 0.25, 0.5, 0.75, 1.0]   # xi=0 reproduces the v4 clean oracle
+  p5_detectable: controls_trip_before_r_hat_certifies     # monotone in xi
+  p5_blind: controls_silent_and_r_hat_collapses_else_unsound_R4   # proven failure regime
+  negative_controls:
+    - NC-1_collinear_confounder        # controls silent, R_hat must collapse
+    - NC-2_source_swap_exchangeability # g_ij invariant under in-class source swap (A5/A6)
+
+# --- pre-registered gates (v4 thresholds kept; v5 G9 / G9-NOV added) ---------
+gates:
+  random_intervention_margin_abs: 0.05    # G1 necessity (screening; on u_deflated)
+  max_utility_drop_abs: 0.02              # G2 utility
+  heldout_taxonomy_retention: 0.80        # transfer retention floor
+  novelty_margin_abs: 0.03                # G5' selector-beats-best-adapted-detector (screening)
+  localization_margin_abs: 0.03           # G6/G7 leakage bound beta_hi*Delta_pos < this
+  g1_evaluated_on: u_deflated
+  g7_evaluated_on: leakage_bound_upper_ci
+  g8_requires:
+    - sham_null_ci_overlaps_zero
+    - bounded_calibrated_ood_slope
+  g9_repair_transfer:                     # REDESIGN_v5 §5.1 (headline)
+    - holm_si_corrected_two_way_cluster_bootstrap_ci_lower_bound_gt_m_r   # CONFIRMATORY (G9-FIX)
+    - class_block_signflip_diagnostic_p_lt_alpha_1_prime                  # required corroborating DIAGNOSTIC (G9-FIX), not confirmatory
+    - bounded_repair_utility_cost_le_0_02
+    - positivity_excluded_frac_lt_0_5_per_class
+    - no_class_or_self_leakage_source_neq_target
+  g9_novelty:                             # REDESIGN_v5 §5.2 (baseline-conditional)
+    - r_hat_proposed_minus_max_B1_B2_B3_simultaneous_lower_ci_gt_0
+
+# --- v4 graded oracle / OOD deflation / leakage slope (preserved) ------------
+graded_oracle:
+  axes:
+    - partial_leakage
+    - multi_cause
+    - distractor
+    - adversarial             # v5 4th axis -> adversarial_oracle.axis_x_confounded
+  crossing_margin: 0.03
+  axis_p_leakage_grid: [0.0, 0.01, 0.02, 0.03, 0.04, 0.06]
+  axis_m_cause_grid: [1, 2, 3, 4]
+  axis_d_distractor_grid: [0.5, 1.0, 2.0, 4.0]
+  axis_x_xi_grid: [0.0, 0.25, 0.5, 0.75, 1.0]
+ood_deflation: true
+leakage_slope_ci: required
+
+# --- v4 nuisance re-estimation (preserved) + v5 sigma_R (REDESIGN_v5 §4.6) ---
+sigma_u_source: validation_bootstrap_upper_ci   # power for U_hat (screening) uses sigma_hi
+kappa_source: validation_lower_ci               # U_target uses kappa_lo
+sigma_r_source: validation_u_statistic_design_effect_upper_ci   # G9 power uses sigma_R, NOT sigma_u (MF-5)
+kappa_repair_source: validation_lower_ci        # m_R uses kappa_lo^repair (Eq. m-R)
+n_val_min:
+  sigma_u: 200
+  kappa: 300
+proximity_pool_min: 8
+nuisance_freeze: at_analysis_lock_validation_only_test_split_sealed
+
+# --- v5 G9 power model (REDESIGN_v5 §4.6 Eq. R-VAR / Eq. R-POWER) ------------
+# Formula evaluation, not evidence. See nuisance.estimate_sigma_r / r_power_repair.
+# R_power := ceil( (z * sigma_r_hi / m_R)^2 * D_eff ); sigma_R from the ordered-kernel
+# two-projection design effect (zeta_10/n_source + zeta_01/n_target, nested matched-null
+# MC, repair-op variance), NOT reusing v4 sigma_u and NOT the symmetric (4/n_eff)*zeta_1
+# shorthand (findings 4, 10). All inputs DATA_NEEDED, estimated on V_sel at lock.
+g9_power:
+  sigma_r_decomposition: "Var(R_hat) = zeta_10/n_source + zeta_01/n_target + (1/N_pair)*(sigma_MC^2/R_null + sigma_op^2/R_int)"
+  zeta_10: DATA_NEEDED          # source projection variance
+  zeta_01: DATA_NEEDED          # target-margin projection variance
+  n_source: DATA_NEEDED
+  n_target: DATA_NEEDED
+  n_eff: DATA_NEEDED            # = min(n_source, n_target); design-effect bookkeeping only
+  sigma_mc: DATA_NEEDED
+  sigma_op: DATA_NEEDED
+  d_eff: DATA_NEEDED
+  m_r: DATA_NEEDED              # Eq. m-R: m_R0 / (2*kappa_lo^repair - 1)
+  r_power_repair_function: nuisance.r_power_repair
+  forward_surcharge_per_example: DATA_NEEDED   # localized repair fwd + R_null null-repair fwds + R_int repeats
+  feasible_point_recheck: re_evaluate_v4_point_against_new_forward_count_and_sigma_R   # §6.3
+
+# --- v4 power/compute feasibility (the v4 point, RE-CHECKED not assumed; §6.3) -
+# The v4 feasible point (n=850, cells=2, kappa=0.92, c_fwd<=4.57e-4) is RE-CHECKED
+# against the new G9 forward count, NOT assumed. Re-checked values are DATA_NEEDED.
+feasible_point:
+  n: 850                      # v4 screening point; re-checked for G9 against sigma_R
+  cells: 2
+  cells_default: 2
+  full_grid_cells: 4
+  kappa: 0.92
+  sigma_u: 0.30               # screening (U_hat) variance; G9 uses sigma_R (DATA_NEEDED)
+  z: 2.734                    # re-checked at the v5 family size m' (DATA_NEEDED)
+  proximity_inflation: 1.125
+  u_target: 0.0595
+  forwards_per_example: 18    # v4 screening surcharge; G9 surcharge re-checked (DATA_NEEDED)
+  budget_gpu_hr: 14
+  c_fwd_2cell_implied: 4.57e-4
+  c_fwd_4cell_implied: 2.28e-4
+  budget_check_2cell_gpu_hr: 13.98
+feasible_point_recheck_v5: >-
+  DATA_NEEDED: re-evaluate R_power (Eq. R-POWER with sigma_R, not sigma_u) and the
+  forward surcharge (localized-repair + R_null matched-null-repair + R_int repair-op
+  repeats) at the v5 Holm family size m'; pin at run authorization.
+decision_order:
+  - measure_c_fwd_validation_timing_calibration
+  - recompute_r_power_repair_with_sigma_R_and_new_family_size      # §6.3 re-check
+  - if_budget_exceeds_v4_point: request_budget_else_reduce_cells_else_reduce_R_null_R_int_to_variance_floor
+
+compute_budget_ref: docs/compute_budget.md
+
+# --- Stage-2 decision routing (hardened, REDESIGN_v5 §8) ---------------------
+stage2_routing:
+  R1_full_certification: g9_and_g9_nov_and_p5_and_p6_pass        # headline causal claim (scoped A5-A9)
+  R2_necessity_plus_protocol: g9_fails_but_protocol_validated_and_B1_B3_lose
+  R3_necessity_only_gated: only_if_g9_null_powered_AND_theory_informative   # not auto-publishable
+  R4_unsound: p5_fails_in_x_prime_blind_certification_withdrawn
+
+# --- run discipline ----------------------------------------------------------
+server:
+  authorized: false
+  reason: >-
+    Phase-B implemented but design_frozen_stage1_RR only; Stage-1 readiness not
+    claimed; no run, no model load, no GPU. ARIS design review not complete.

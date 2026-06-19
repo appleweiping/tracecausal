@@ -64,8 +64,33 @@ TRACECAUSAL_CONTRACT = ProjectContract(
 )
 
 
-def validate_manifest(manifest: dict[str, Any]) -> list[str]:
-    """Return contract violations for a run or design manifest."""
+# Experiment configs whose raw text must carry the ``authorized: false`` marker
+# whenever it is supplied to ``validate_manifest`` (config-text enforcement). The
+# hardened v4 plan (``redesign_v4_ar_lead.yaml``) is enforced alongside the formal
+# config so the v4 lock cannot ship a config that flips ``server.authorized`` on.
+AUTHORIZATION_GUARDED_CONFIGS: tuple[str, ...] = (
+    "formal_tracecausal.yaml",
+    "redesign_v4_ar_lead.yaml",
+    "redesign_v5_ar_lead.yaml",
+)
+
+
+def validate_manifest(
+    manifest: dict[str, Any],
+    *,
+    config_texts: dict[str, str] | None = None,
+) -> list[str]:
+    """Return contract violations for a run or design manifest.
+
+    When ``config_texts`` is supplied (a mapping of config filename -> raw text),
+    every guarded experiment config in :data:`AUTHORIZATION_GUARDED_CONFIGS` that
+    appears in the mapping is required to carry the literal ``authorized: false``
+    marker. This extends the ``server.authorized`` guard from the parsed manifest
+    to the on-disk hardened v4 plan (``redesign_v4_ar_lead.yaml``), not only the
+    formal config, so a v4-lock config cannot silently re-authorize a run. Configs
+    not present in the mapping are not checked here (the caller decides which texts
+    to hand in); a guarded config present but flipped to ``authorized: true`` fails.
+    """
     errors: list[str] = []
     if manifest.get("project") != TRACECAUSAL_CONTRACT.slug:
         errors.append("project slug must be tracecausal")
@@ -75,6 +100,19 @@ def validate_manifest(manifest: dict[str, Any]) -> list[str]:
         errors.append("paper_minimum seeds must be at least 20")
     if len(manifest.get("baselines", [])) < 3:
         errors.append("at least three baseline families are required")
+
+    if config_texts:
+        for name in AUTHORIZATION_GUARDED_CONFIGS:
+            text = config_texts.get(name)
+            if text is None:
+                continue
+            if "authorized: false" not in text:
+                errors.append(
+                    f"{name} must carry 'authorized: false' (server execution "
+                    "must not be authorized)"
+                )
+            if "authorized: true" in text:
+                errors.append(f"{name} must not set 'authorized: true'")
     return errors
 
 

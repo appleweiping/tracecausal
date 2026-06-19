@@ -85,6 +85,14 @@ def main() -> int:
     ):
         return 1
 
+    # The hardened v4 plan must also keep server execution unauthorized.
+    if not require_markers(
+        ROOT / "configs" / "experiments" / "redesign_v4_ar_lead.yaml",
+        ["authorized: false"],
+        "redesign-v4",
+    ):
+        return 1
+
     if not require_markers(
         ROOT / "docs" / "intervention_protocol.md",
         [

@@ -57,9 +57,21 @@ paper evidence.
 
 ## Current Status
 
-The non-server initialization package is complete for handoff: see
-`docs/active_todo.md`, `docs/milestones.md`, `docs/paper_claims_status.md`,
-and `docs/definition_of_done.md`. Server experiments are deliberately not run
-from this local setup. The next real stage is ARIS experiment-plan review of
-the formal trace extraction and intervention protocol, followed by server-side
-trace extraction only after the plan passes the documented gates.
+The Stage-1 design is **frozen** and its Phase-2 identification machinery is
+**implemented and frozen** (uncommitted): the locked method/theory/analysis plan
+is `docs/redesign/REDESIGN_v4.md`; the CIU estimand contract and pure-Python
+identification helpers live in `src/tracecausal/` (`ciu.py`, `nuisance.py`,
+`oracle_gen.py`, `nullpool.py`) with the passing unit harness
+`tests/test_ciu_nulldata.py` (no model, no GPU); the AR-lead freeze is
+`configs/experiments/redesign_v4_ar_lead.yaml`; and a Stage-1 paper skeleton with
+`DATA_NEEDED` result placeholders (no fabricated numbers) is at `paper/main.tex`
+(+ `paper/references.bib`, not yet compiled). See also `docs/active_todo.md`,
+`docs/milestones.md`, `docs/paper_claims_status.md`, and
+`docs/definition_of_done.md`.
+
+Server experiments are deliberately **not** run from this local setup; every
+paper-facing claim remains `pending` and no empirical number exists. The next real
+stage is ARIS experiment-plan review of the formal trace extraction and
+intervention protocol, followed by server-side trace extraction only after the plan
+passes the documented gates and the run is explicitly authorized
+(`server.authorized: false` until then).

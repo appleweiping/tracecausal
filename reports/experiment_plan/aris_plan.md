@@ -18,7 +18,7 @@ segment intervention on one approved model/dataset pair.
 ```bash
 # Draft only, do not run without approval
 python scripts/extract_traces.py \
-  --config configs/experiments/formal_tracecausal.yaml \
+  --config configs/experiments/redesign_v4_ar_lead.yaml \
   --run-tier diagnostic \
   --output outputs/tracecausal_first_gate
 ```
