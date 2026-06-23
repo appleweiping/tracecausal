@@ -24,16 +24,30 @@ must-fix item n (§2 of the review). This file supersedes the working note
 
 ## 0. Executive summary (one paragraph)
 
-v4 builds an *honest* matched-null causal estimand (CIU, `U_hat`) and proves its
-internal machinery leakage-safe, but its central claim is certified by **internal
-consistency** — `U_hat` is unbiased for a contrast the method itself defines, and
-every kill-gate G1–G8 checks that the *estimator* is well-behaved, never that the
-localized segment is *useful for anything a detector cannot already do*. v5 closes
-that gap with one principle — **localization certified by intervention usefulness
-earned out-of-sample under an uncontrolled reference** — operationalized as a
-**cross-example repair-transfer** certification statistic `R_hat` (headline) sitting
-on top of `U_hat` (now demoted to a *screening* statistic). The patching/repair
-machinery (`interventions.patch`/`.replay`), idle in v4, becomes the star. v5 does
+v4 builds an *honest* matched-null intervention estimand (CIU, `U_hat`) and proves
+its internal machinery leakage-safe, but its central claim is certified by
+**internal consistency** — `U_hat` is unbiased for a contrast the method itself
+defines, and every kill-gate G1–G8 checks that the *estimator* is well-behaved,
+never that the localized segment is *useful for anything a detector cannot already
+do*. The v5 **central contribution is a matched-null, selective-inference-correct
+CERTIFICATION PROTOCOL for intervention-usefulness localization**: the CIU
+screening estimand (`U_hat`) plus a **cross-example repair-transfer** certification
+statistic `R_hat` (headline, gate G9) sitting on top of it (`U_hat` demoted to a
+*screening* statistic), with two-way cluster-bootstrap / class-block-permutation
+inference, selective-inference correction, and an adversarial graded oracle. The
+protocol issues a **falsifiable, multiplicity-correct certificate** that a
+localization's targeted, training-free edits **transfer** to held-out in-class
+targets and **beat** detector-selected localizations (G9-NOV) — a guarantee
+detection alone cannot provide. One principle states it: **intervention-transfer
+usefulness must be *certified* out-of-sample, under a reference the method does not
+control.** The patching/repair machinery (`interventions.patch`/`.replay`), idle in
+v4, becomes the star. **The CAUSAL interpretation is a SECONDARY, CONDITIONAL
+application:** under the registered assumptions A5–A9 (in particular
+reference-validity A8, acknowledged non-identifiable on real observational AR-LLM
+traces — a limitation shared by all activation-patching causal tracing) and
+Identification Lemma 5.1, a certified localization *additionally* admits a
+causal-usefulness reading; the protocol's value does **not** depend on that causal
+reading holding. v5 does
 **not** stop at the relabel the reviewer flagged as lateral: it (i) replaces the
 indefensible "iff" thesis with a **named estimand under five explicit assumptions
 plus an identification lemma** (MF-1); (ii) specifies a **frozen source→target
@@ -127,28 +141,58 @@ G9 null. v5 (this document) resolves each — §2 below maps every item.
 
 ## 3. The sharpened v5 central contribution
 
-### 3.1 The thesis (corrected — a certified claim, not an "iff"; MF-1, MF-9)
+### 3.1 The thesis (a certification protocol; the causal reading is conditional, not an "iff"; MF-1, MF-9)
 
 > **A trace segment is *repair-transfer-certified* for a hallucination class when a
 > training-free, source-derived localized repair policy, applied to held-out
 > in-class targets, recovers factuality beyond a matched-null repair, at a bounded
 > edit budget and bounded utility cost — under the registered operator, transport
 > map, reference construction, class partition, and matched-null assumptions (A5–A9,
-> §4.4).** Certification is **sufficient** evidence of causal usefulness, not a
-> definition of it: repair-transfer is *neither necessary nor sufficient* for
-> causal usefulness in general (a segment may be causally necessary in-place yet
-> not single-span-repairable; a generic repair may transfer for non-causal
-> reasons), so the word "iff" is **dropped** and the claim is scoped to the
-> registered design.
+> §4.4).** This certificate is, in the first instance, a statement about
+> **intervention-transfer usefulness**: it is falsifiable (the transfer can fail),
+> baseline-relative (it must beat detector-selected localizations through the
+> identical pipeline, G9-NOV), and multiplicity-correct (every adaptive choice is
+> paid for) — and **none of that depends on a causal interpretation**.
+> **Separately and conditionally**, certification is **sufficient** evidence of
+> **causal** usefulness *under A5–A9*, not a definition of it: repair-transfer is
+> *neither necessary nor sufficient* for causal usefulness in general (a segment may
+> be causally necessary in-place yet not single-span-repairable; a generic repair
+> may transfer for non-causal reasons), so the word "iff" is **dropped** and the
+> causal reading is scoped to the registered design.
 
 Operationally: v4's `U_hat` (above-pool factuality change under `mask`, on the
 *same* example) is the **screening** statistic; the new **certification** statistic
 `R_hat` (above-matched-null repair-transfer, *across* examples) is the **headline**.
+The headline contribution is the **protocol** that issues the certificate; the
+causal-usefulness reading is a secondary application that rides on top of it under
+A5–A9.
+
+> **SCOPE LABEL (read this before reading the rest of §3–§5): the cross-example
+> repair-transfer certificate `R_hat` / G9 / G9-NOV is an ORIGINAL EXTENSION that
+> goes BEYOND the user's original idea — it is an extension, NOT a direct
+> implementation of the original idea.** The user's original tracecausal idea (verbatim,
+> `user_ideas/hallucination/ideas of hallucination.txt`, idea #2) is the *training-free*,
+> in-place certification of **which segment of the text causes the hallucination** —
+> "*some segmentation of the text lead to hallucination? then ... a lightweight,
+> training-free to fix the segmentation*." That original idea is realized **directly**
+> by the **necessity** statistic `U_hat` / **G1** (the matched-null, training-free
+> certification of *which segment* is causally necessary in place, and the in-place
+> "fix the segmentation"). The **cross-example transfer question** `R_hat` answers —
+> "does a repair *policy* learned by localizing on one example *transfer* to fix a
+> *different*, held-out in-class example?" — is a **new, original extension of
+> tracecausal's OWN idea**: the original idea never mentions cross-example transfer.
+> This extension is *internal to tracecausal* (it extends tracecausal's own
+> segment-localization idea into an out-of-sample certificate); it is **NOT** related
+> to, derived from, or shared with any other project. The screening `U_hat`/G1 line
+> remains the faithful realization of the original idea; `R_hat`/G9 is the labeled
+> extension built on top of it. This label is restated at the estimand (§4.4) and
+> mirrored in `paper/main.tex` (Contributions + Sec. `sec:method:transport`) and in
+> `REDESIGN_v6.md` §0.1.
 
 ### 3.2 The unifying principle (so it is not a bag of tricks)
 
-> **Counterfactual usefulness must be earned out-of-sample, under a reference the
-> method does not control.**
+> **Intervention-transfer usefulness must be *certified* out-of-sample, under a
+> reference the method does not control.**
 
 Three surfaces are *instances* of this one principle, not additive tricks:
 - **Certification** (`R_hat`, G9) earns usefulness out-of-sample **across examples**
@@ -156,13 +200,14 @@ Three surfaces are *instances* of this one principle, not additive tricks:
 - **Selective-inference correction** (§6) earns gate verdicts out-of-sample **across
   the data-adaptive binning and the operator selection** (both are selection events
   that must be paid for).
-- **Adversarial oracle** (Axis X′, §7) earns A4★/A9 support out-of-distribution **in
-  the reference** (a regime where the reference is misspecified and the controls
-  must catch it — and a regime where, provably, they cannot).
+- **Adversarial graded oracle** (Axis X′, §7) stress-tests A4★/A9 support
+  out-of-distribution **in the reference** (a regime where the reference is
+  misspecified and the controls must catch it — and a regime where, provably, they
+  cannot).
 
-Remove any one and the principle is incompletely tested. One sentence states the
-whole paper: *causal localization is only as good as the repair it licenses on data
-and references you did not get to choose.*
+Remove any one and the certificate is incompletely earned. One sentence states the
+whole paper: *a localization's intervention-transfer usefulness is only as good as
+the repair it licenses on data and references you did not get to choose.*
 
 ### 3.3 Why `R_hat` is not just a second `U_hat`
 
@@ -177,14 +222,17 @@ which is exactly why G9 is a *new* falsifiable test and not a restatement of G1.
 ### 3.4 Net novelty statement (narrowed and conditional; MF-9)
 
 > *Conditional on the detector-to-repair baselines (B1–B3, §4.3) failing G9, we are
-> the first to **certify** hallucination localization by a **matched-null,
-> selective-inference-correct, cross-example repair-transfer** estimand — a
+> the first to issue a **matched-null, selective-inference-correct, cross-example
+> repair-transfer CERTIFICATE** of hallucination-localization usefulness — a
 > training-free, multiplicity-correct edit-transfer test — distinguishing it from
 > detection-based tracing (TraceDet, an IB sub-trace optimized for AUROC), from
 > fixed-grid recovery-rate tracing (FCCT/IRI), and from SFT-based causal mitigation
-> (CDCR-SFT). If a detector-selected span fed through the identical repair pipeline
-> matches our margin, the contribution downgrades to "the matched-null + SI
-> certification protocol," not "causal-vs-correlational localization."*
+> (CDCR-SFT). The certificate is the contribution; the causal-usefulness reading it
+> conditionally licenses (under A5–A9) is a secondary application, not the novelty
+> claim. If a detector-selected span fed through the identical repair pipeline
+> matches our margin, the contribution narrows to "the matched-null + SI
+> certification protocol" itself, and we do not claim "causal-vs-correlational
+> localization."*
 
 This is deliberately weaker than `_v5_proposal.md`'s "first to certify by
 repair-transfer," which the review flagged as inflated.
@@ -240,6 +288,57 @@ exactly; (iv) if multiple candidates remain, the **first by position** (determin
 tie-break). If no in-class, budget-matched, proximity-matched span exists on `x_j`,
 the **positivity guard fails** and the pair `(i,j)` is **excluded** (recorded; this
 is the A7 positivity event, §4.4).
+
+#### 4.2a The claim-span inventory is a PROXY (documented assumption, with construction rule)
+
+The anchor map `T` (step (i)) consumes, per target `x_j`, an **atomic-claim-span
+inventory**: the list of candidate claim spans `T` may anchor onto, with each span's
+G3 class, proximity bin (via distance-to-answer), edit budget `k`, and an
+`is_target_designated` flag marking the target's own designated/oracle span.
+**Open TriviaQA / HotpotQA carry NO ground-truth atomic-claim segmentation.** We
+therefore **do not have** a gold claim inventory and **construct a PROXY one
+deterministically**. This is explicitly labeled as a proxy; it is **not** treated as
+ground truth.
+
+**Exact construction rule (the DEFAULT `claim_span_variant = "salience_grid"`;
+`scripts/repair_forward_provider.build_target_claim_spans`).** For a target with prompt
+length `L`, answer-forming position `answer_index`, question-region start
+`prompt_start`, transport budget `k`, and the target's own salience/answer-bearing
+designated window `[d_a, d_b]`:
+
+1. the **atomic claim spans** are the budget-`k`-length windows on the
+   **non-overlapping** stride-`k` grid over `[prompt_start, L)` (the *exact*
+   `enumerate_candidate_spans(stride=k)` grid the matched-null pool already uses, so
+   PROPOSED, the baselines, and the matched null all live on one grid; the
+   non-overlapping grid is the load-bearing empty-pool fix, §4.5);
+2. each window's `distance_to_answer = |answer_index − b|` (window end `b`) — the same
+   proximity key the matched null and the G7 leakage bound share, so the proxy inventory
+   inherits the registered proximity stratification;
+3. each window's `budget_k = k` (the policy's realised transport budget) and the cell's
+   single `g3_class` (within one class cell all spans share it, so the within-class
+   transport condition A6/A7 is satisfiable);
+4. the target's own designated window `[d_a, d_b]` (the top-salience window the CIU
+   selector would localise on this very target) is flagged
+   `is_target_designated = True` so the transport **collapse guard refuses to anchor
+   onto it** (anchoring the target's own oracle span would collapse "transfer" into a
+   within-target oracle repair; refinement 1). If `[d_a, d_b]` is off the grid it is
+   appended explicitly as the (single) designated span.
+
+**The assumption this PROXY encodes (state it plainly, attack it in §8a):** *"atomic
+claim span" ≈ "a budget-length window on the salience/proximity grid," and
+"designated/oracle claim span" ≈ "the target's own top-salience window."* In words: we
+assume that a claim-level segmentation of the target, were it available, would partition
+the question region into roughly budget-length, proximity-stratified windows, with the
+answer-bearing window playing the role of the designated claim. This is a *faithful,
+reproducible structural proxy* that keeps the transport positivity/collapse guards
+meaningful, but it is an assumption — **the headline causal claim must NOT depend on
+it.** A registered **proxy-robustness ablation (§8a)** proves the G9 / G9-NOV verdict
+is invariant to the claim-span construction rule; if a real claim segmenter is later
+supplied, it replaces `build_target_claim_spans` and the rest of the pipeline is
+agnostic to how the inventory was built. **Scope note:** this proxy is the
+operationalization of the *original* idea's "segmentation of the text" on datasets that
+lack gold claim spans; the cross-example *transfer* of a repair across that segmentation
+is the labeled extension of §3.1.
 
 ### 4.3 The G9 baseline panel (MF-3 — the detector contrast made empirical)
 
@@ -642,8 +741,10 @@ v4's P1–P4 preserved verbatim; P4 spans Axis X′ at `xi=0` as its clean endpo
 The review objected that `_v5_proposal.md` sold a broad G9 failure as "still a
 complete paper" by default. v5 makes the downgrade **conditional and powered**:
 
-- **R1 (full certification).** G9 + G9-NOV + P5 + P6 pass ⇒ headline causal
-  repair-transfer claim (the 9-tier contribution), scoped by A5–A9.
+- **R1 (full certification).** G9 + G9-NOV + P5 + P6 pass ⇒ the headline
+  repair-transfer **certificate** of intervention-transfer usefulness (the 9-tier
+  contribution); *conditionally* on A5–A9 it additionally licenses the
+  causal-usefulness reading.
 - **R2 (necessity + protocol).** G9 fails but G9-NOV's protocol (matched-null + SI)
   is itself a validated contribution and B1–B3 lose ⇒ report the certification
   *protocol* as the contribution (weaker but honest).
@@ -660,6 +761,81 @@ complete paper" by default. v5 makes the downgrade **conditional and powered**:
   limitation. No causal usefulness claim.
 
 This removes the "default complete paper" escape hatch the review flagged.
+
+### 8a. Pre-registered proxy-robustness ablation (the claim-span inventory does NOT move the verdict)
+
+§4.2a documents that the atomic-claim-span inventory is a **PROXY** (no gold claim
+segmentation on TriviaQA/HotpotQA). This ablation is the registered, pre-data proof
+that **the headline causal claim does not depend on that proxy** — i.e. the G9 / G9-NOV
+verdict is **invariant** to the claim-span construction rule. It is pre-registered here
+(pre-data), runs the **SAME** `g_ij → R_hat → G9/G9-NOV` pipeline under each alternative
+segmentation, and changes **no** frozen kernel, **no** estimand, **no** default behavior.
+
+**The alternative segmentation rules (`claim_span_variant`, ≥3 alternatives + the
+default).** Each variant only changes how `build_target_claim_spans` enumerates the
+inventory; everything downstream (`transport` → `g_ij` → `r_hat` → gates) is byte-identical:
+
+- **`salience_grid` (DEFAULT, §4.2a).** Non-overlapping stride-`k` budget windows; the
+  registered behavior. The ablation runs are contrasted *against this*.
+- **`sentence` (alt 1, sentence-level).** Atomic claim spans are the sentence/clause
+  segments of the question region (delimiter-split, then snapped to budget-`k` windows
+  so the edit budget and the matched-null grid still match); the designated span is the
+  answer-bearing sentence's window. Tests "does a *linguistic* claim unit change the
+  verdict?"
+- **`stride_half` (alt 2, fixed-window at a different stride).** Budget-`k` windows on a
+  **stride-`k/2`** (overlapping, denser) grid instead of stride-`k`; the inventory is
+  finer. Tests sensitivity to the grid spacing / window count.
+- **`salience_threshold` (alt 3, salience-threshold variant).** Only windows whose
+  aggregate salience clears a pre-registered quantile threshold `q` enter the inventory
+  (a content-selective inventory rather than the full grid); the designated span is the
+  argmax-salience window. Tests sensitivity to *which* windows are deemed "claims."
+
+(Each variant snaps to the budget-`k` / proximity grid so positivity is comparable; a
+variant that empties the pool for a class routes that class to "insufficient positivity"
+under the existing A7 rule, **not** to a spurious null.)
+
+**The invariance criterion (pre-registered, the headline verdict must not flip).**
+Let `M(v) := R_hat(PROPOSED) − max{R_hat(B1), R_hat(B2), R_hat(B3)}` be the G9-NOV margin
+under claim-span variant `v`, with its Holm/SI-corrected simultaneous lower CI
+`M_lo(v)`, and let `G9(v) ∈ {certified, not}` be the G9 verdict. The proxy is declared
+**robust** iff, across **all** variants `v ∈ {salience_grid, sentence, stride_half,
+salience_threshold}`:
+
+1. **Sign + significance invariance (headline).** `sign(M(v))` is the same as
+   `sign(M(salience_grid))` **and** `M_lo(v) > 0` agrees with `M_lo(salience_grid) > 0`
+   (the G9-NOV pass/fail does not flip);
+2. **G9 verdict invariance.** `G9(v)` equals `G9(salience_grid)` for every `v` (same
+   certified/not-certified verdict, on the same ≥2 lead cells);
+3. **Bounded effect-size drift (reported, secondary).** `|M(v) − M(salience_grid)|` is
+   reported per variant; a drift exceeding a pre-registered tolerance (DATA_NEEDED,
+   pinned on `V_sel` as a fraction of `m_R`) is flagged even when the sign/significance
+   hold, and narrows the claim (see fail action).
+
+**What a FAIL means (the fail action — claim-span sensitivity ⇒ downgrade).** If **any**
+variant flips the headline sign or significance (criterion 1 fails) or the G9 verdict
+(criterion 2 fails), the proxy is **claim-span-sensitive** and the **core causal claim
+is DOWNGRADED / QUALIFIED**: the paper must report the sensitivity, route the headline to
+**R2** (the certification *protocol* as the contribution) **or R3** (necessity-only,
+gated by power + theory) rather than **R1**, and explicitly state that
+"repair-transfer certification at the claim level is **conditional on the claim
+segmentation**" rather than claiming a segmentation-invariant causal localization. A
+criterion-3-only drift (sign/significance hold but the effect size moves beyond
+tolerance) keeps R1 but adds a stated limitation. **Forbidden:** silently picking the
+variant that passes, dropping a failing variant, or re-tuning the proxy to recover the
+verdict — the ablation is run over **all** variants and **all** are reported (AGENTS.md
+Hard Rules; the variant set is frozen here, pre-data).
+
+**Runnable hook + selective-inference discipline.** A `--claim-span-variant` flag on
+`scripts/repair_forward_provider.py` (default `salience_grid`, behavior unchanged)
+selects the rule; the ablation is a small config
+(`configs/experiments/claim_span_ablation.yaml`) enumerating the variant set, the
+invariance criteria, and the fail action. The ablation is **secondary / diagnostic**,
+not part of the confirmatory Holm family, so it does **not** inflate `m'`; but it is run
+**only** under `--i-have-authorization` + `server.authorized: true` (do-not-run-gated,
+like every forward stage), and the segmentation rule is **frozen on `V_sel`** alongside
+the operator freeze (no peeking at `V_inf`/test to choose a variant). Every variant's
+`R_hat` / margin / verdict is `DATA_NEEDED` until the authorized run; **no number is
+fabricated here.**
 
 ---
 
@@ -780,7 +956,7 @@ rule), and no experiment has been run — every empirical result slot remains
 | Surface | v4 state | v5 change | Driving must-fix |
 | --- | --- | --- | --- |
 | **Headline statistic** | `U_hat` (necessity, in-place) is the headline | `U_hat` demoted to **screening**; `R_hat` (cross-example repair-transfer) is the **headline** | §1.1 cap |
-| **Thesis form** | n/a (v4 measures, does not claim usefulness) | "iff" **dropped**; a **certified claim** under named assumptions A5–A9 | MF-1, MF-9 |
+| **Thesis form** | n/a (v4 measures, does not claim usefulness) | "iff" **dropped**; headline is a **certificate of intervention-transfer usefulness** (the protocol), with the **causal reading a conditional secondary application** under named assumptions A5–A9 | MF-1, MF-9 |
 | **Cross-example estimand** | absent | **Eq. R** + **transport map `T`** (Variant C) + **Identification Lemma 5.1** | MF-1, MF-2 |
 | **Detector contrast** | G5′ within-method horse-race on `U_hat` | **G9-NOV**: empirical margin over B1–B3 through identical `repair_ops` | MF-3, MF-9 |
 | **Inference for the new gate** | paired/bootstrap on within-example contrasts | **two-way cluster bootstrap + class-block permutation + Hájek var**, nested matched-null MC | MF-4 |
@@ -831,11 +1007,21 @@ scaffold v5's certification is built on.
 5. **Selection split costs power; Bonferroni over `K_bin·K_op` is conservative.**
    *Bound:* SI-1/SI-2 chosen by a **deterministic rule** known before lock; the §6.3
    feasibility re-check is closed-form, so the cost is known, not discovered.
-6. **Axis X′ is still synthetic.** *Bound (strengthened per MF-7):* X′-blind is the
-   first oracle in this line that **provably can fail** (collinear confounder the
-   controls cannot see); the paper claims only "the method's `R_hat` collapses on the
-   planted confounder classes X′-detectable and X′-blind," explicitly **not** "robust
-   to all confounding."
+6. **Axis X′ is still synthetic, and A8 (reference validity) is the one substantive
+   assumption of the *conditional* causal reading.** *Bound (strengthened per MF-7):*
+   X′-blind is the first oracle in this line that **provably can fail** (collinear
+   confounder the controls cannot see); the paper claims only "the method's `R_hat`
+   collapses on the planted confounder classes X′-detectable and X′-blind," explicitly
+   **not** "robust to all confounding." *Scoping note (not a headline liability):*
+   because the causal interpretation is a **secondary, conditional application** and
+   the certificate of intervention-transfer usefulness does not rely on A8, A8's
+   non-identifiability on real AR-LLM traces — a limitation **shared by all
+   activation-patching causal tracing** (ROME, FCCT/IRI, the causal-mediation line) —
+   scopes the causal reading rather than threatening the headline contribution. We
+   keep the disclosure in full: on real AR-LLM traces A8 remains non-identifiable; the
+   oracle bounds the *method's* behaviour under a known confounder, it does not certify
+   A8 in the wild. Declining A8 withdraws only the conditional causal reading, not the
+   certificate.
 7. **Repair forwards raise compute.** *Bound:* folded into Eq. R-POWER's
    `forward_surcharge` and the v4 decision order; the locked config records the
    surcharge. `server.authorized` stays false; this document authorizes no run.
@@ -857,11 +1043,13 @@ explicitly labelled as such (`server.authorized: false`).
 
 ## 12. One-line thesis (for the title/abstract rewrite)
 
-> **Repair-transfer-certified trace localization: a segment is certified causally
-> useful for a hallucination class when a training-free, source-derived repair
-> *policy* recovers held-out in-class targets beyond a matched-null repair — a
-> cross-example, U-statistic-valid, selective-inference-correct, adversarially-
-> stressed certification (conditional on out-transferring detector-selected
-> localizations through the identical repair pipeline) that distinguishes causal
-> localization from detection, fixed-grid recovery-rate tracing, and SFT-based causal
-> mitigation.**
+> **A matched-null, selective-inference-correct certification protocol for
+> intervention-usefulness localization in hallucination tracing: a segment is
+> *certified* for a hallucination class when a training-free, source-derived repair
+> *policy* recovers held-out in-class targets beyond a matched-null repair and beats
+> detector-selected localizations through the identical pipeline — a cross-example,
+> U-statistic-valid, selective-inference-correct, adversarially-stressed,
+> falsifiable, multiplicity-correct certificate of intervention-transfer usefulness
+> that detection alone cannot provide. *Conditionally*, under the registered
+> assumptions A5–A9, a certified localization additionally admits a causal-usefulness
+> reading; the protocol's value does not depend on it.**

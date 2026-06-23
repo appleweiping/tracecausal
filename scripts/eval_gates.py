@@ -43,10 +43,15 @@ def build_parser():
     p = base_parser("nuisance + gates + queue reconcile (do-not-run wrapper)")
     # modes
     p.add_argument("--estimate-nuisance", action="store_true")
+    p.add_argument("--build-gate-inputs", action="store_true",
+                   help="GLUE (3.8b): assemble gate_inputs.json from the upstream "
+                        "rhat/g_ij/nuisance/operator-freeze artifacts (pure CPU)")
     p.add_argument("--reconcile-queue", action="store_true")
     p.add_argument("--g9", action="store_true")
     p.add_argument("--g9-nov", action="store_true")
     p.add_argument("--require-v5", action="store_true")
+    p.add_argument("--gate-input-spec",
+                   help="path to the gate-input manifest (for --build-gate-inputs)")
     # common
     p.add_argument("--family")
     p.add_argument("--dataset")
@@ -136,6 +141,9 @@ def _heavy(args, plan):
     if plan["task"] == "estimate_nuisance":
         from _runners import run_estimate_nuisance as _run
         return _run(args, plan)
+    if plan["task"] == "build_gate_inputs":
+        from _runners import run_build_gate_inputs as _run
+        return _run(args, plan)
     from _runners import run_eval_gates as _run
     return _run(args, plan)
 
@@ -147,7 +155,19 @@ def main(argv=None) -> int:
     if args.reconcile_queue:
         return _reconcile(args)
 
-    if args.estimate_nuisance:
+    if args.build_gate_inputs:
+        task = "build_gate_inputs"
+        plan = {
+            "task": task,
+            "family": args.family,
+            "dataset": args.dataset,
+            "bootstrap": args.bootstrap,
+            "uses_model_or_gpu": False,
+            "kernel": "tracecausal.repair_transfer.{r_hat,common_support_pairs,"
+                      "g9_nov_margin_simultaneous}",
+            "emits": "gate_inputs.json (the EXACT schema run_eval_gates requires)",
+        }
+    elif args.estimate_nuisance:
         task = "estimate_nuisance"
         plan = {
             "task": task,

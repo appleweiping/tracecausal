@@ -74,7 +74,11 @@ from tracecausal import (  # noqa: E402
 from tracecausal.adversarial_oracle import AXIS_X_XI_GRID
 from tracecausal.binning_selection import select_binning
 from tracecausal.nullpool import CandidateSpan, build_null_pool, serialize_pool
-from tracecausal.repair_transfer import RepairGain
+from tracecausal.repair_transfer import (
+    RepairGain,
+    common_support_pairs,
+    g9_nov_margin_simultaneous,
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -295,7 +299,7 @@ def run_build_matched_null_pool(args, plan) -> dict:
 def run_estimate_r_hat(args, plan) -> dict:
     """3.7: dependent-pair inference over the collected g_ij rows (pure CPU)."""
     out = _require_output(args)
-    rows = _load_repair_gain_rows(args)
+    rows, artifact = _load_repair_gain_rows(args)
     weights = _load_class_weights(args)
     pairs = [
         RepairGain(
@@ -314,10 +318,18 @@ def run_estimate_r_hat(args, plan) -> dict:
     perm = class_block_permutation(pairs, weights=weights, n_permutations=n_perm)
     hajek = hajek_projection_var(pairs)
     mc_clustered = target_clustered_mc_var(pairs, weights=weights)
+    # R_null is the REALIZED matched-null draw count the forward stage actually used;
+    # it determines the nested matched-null MC term in sigma_R, so it must come from
+    # the g_ij artifact (the forward stage persists ``r_null_realized``), NOT a CLI
+    # default. We read it off the artifact; only if absent do we fall back to the CLI
+    # ``--r-null`` integer, then to 1 (the conservative single-draw floor). This
+    # resolves the historical r_null_count-vs-r_null ambiguity: the realized integer
+    # is the single source of truth and travels with the rows it was computed on.
+    r_null = _resolve_realized_r_null(artifact, args)
     sigma_r = estimate_sigma_r(
         [(p.source_id, p.target_id, p.g) for p in pairs],
         mc_var_per_pair=[p.mc_var for p in pairs],
-        r_null=int(getattr(args, "r_null_count", 1) or 1),
+        r_null=r_null,
         r_int=int(getattr(args, "r_int", 16) or 16),
     )
     payload = {
@@ -329,10 +341,161 @@ def run_estimate_r_hat(args, plan) -> dict:
         "hajek_projection_var": hajek,
         "target_clustered_mc_var": mc_clustered,
         "sigma_r": sigma_r,
+        "r_null_realized": r_null,
         "n_pairs": len(pairs),
     }
     h = _write_json(out / "rhat.json", payload)
-    return {"output_hash": h, "row_count": len(pairs)}
+    return {"output_hash": h, "row_count": len(pairs), "r_null_realized": r_null}
+
+
+def _resolve_realized_r_null(artifact: dict | None, args) -> int:
+    """Resolve the REALIZED R_null draw count for the variance (never a bare default).
+
+    Precedence: the g_ij artifact's persisted ``r_null_realized`` (the integer the
+    forward stage actually drew) -> the CLI ``--r-null`` if it parses to a positive
+    int -> 1 (single-draw conservative floor). The artifact is the source of truth so
+    the variance matches the draws the rows were built from.
+    """
+    if isinstance(artifact, dict):
+        val = artifact.get("r_null_realized", artifact.get("r_null"))
+        try:
+            iv = int(val)
+            if iv >= 1:
+                return iv
+        except (TypeError, ValueError):
+            pass
+    for attr in ("r_null", "r_null_count"):
+        try:
+            iv = int(getattr(args, attr, None))
+            if iv >= 1:
+                return iv
+        except (TypeError, ValueError):
+            continue
+    return 1
+
+
+def run_build_gate_inputs(args, plan) -> dict:
+    """3.8b (GLUE): assemble the EXACT ``gate_inputs.json`` ``run_eval_gates`` requires.
+
+    Pure CPU. Maps the upstream artifacts into the single aggregate JSON the headline
+    gate stage consumes -- so that ``eval_gates --g9`` does not raise ``RunInputError``
+    for a missing field. It reads:
+
+    * ``rhat.json`` for PROPOSED (point ``r_hat``, two-way-cluster CI lo/hi, the
+      class-block permutation diagnostic ``p_value``);
+    * per-arm g_ij rows ({PROPOSED, B1, B2, B3, B4}) to compute each arm's ``R_hat``
+      and, for {B1,B2,B3}, the **G9-NOV simultaneous margin lower CI** via
+      :func:`repair_transfer.g9_nov_margin_simultaneous` -- but ONLY after
+      :func:`repair_transfer.common_support_pairs` aligns the arms (the common-support
+      intersection is taken FIRST; the simultaneous bootstrap then runs fail-closed on
+      identical pair keys). B4's CI is the within-``g`` matched-null repair control;
+    * ``nuisance.json`` for the selective-inference / margin nuisance (``m_r0``,
+      ``kappa_lo_repair``, ``n_val_sel``, ``n_val_inf``, ``m_prime``, ``k_bin``,
+      ``k_op``); ``k_op`` is read from the operator-freeze artifact when present (the
+      DERIVED grid cardinality), never re-declared here.
+
+    No number is synthesized: every value is computed from a real upstream artifact or
+    raises :class:`RunInputError`.
+    """
+    out = _require_output(args)
+    spec = _load_gate_input_spec(args)
+
+    # --- PROPOSED inference artifact (rhat.json) ----------------------------
+    rhat_art = spec["rhat_proposed"]
+    est = rhat_art["r_hat"]
+    r_hat_point = float(est["r_hat"] if isinstance(est, dict) else est)
+    ci = rhat_art["ci_two_way_cluster_bootstrap"]
+    ci_lo, ci_hi = float(ci["ci_lo"]), float(ci["ci_hi"])
+    perm = rhat_art["class_block_permutation"]
+    perm_p = float(perm["p_value"] if isinstance(perm, dict) else perm)
+
+    # --- per-arm g_ij rows -> RepairGain pairs ------------------------------
+    arm_pairs = {arm: _rows_to_pairs(rows) for arm, rows in spec["arm_rows"].items()}
+    weights = spec.get("class_weights")
+
+    def _arm_rhat(arm: str) -> float | None:
+        ps = arm_pairs.get(arm)
+        if not ps:
+            return None
+        from tracecausal.repair_transfer import r_hat as _rh
+
+        return _rh(ps, weights=weights).r_hat
+
+    r_hat_proposed = _arm_rhat("PROPOSED")
+    if r_hat_proposed is None:
+        r_hat_proposed = r_hat_point  # fall back to the inference artifact's point
+
+    # detector baselines for the novelty max (B1/B2/B3 only; B0/B4/B5 excluded, §4.3)
+    detector_baselines = {
+        b: _arm_rhat(b) for b in ("B1", "B2", "B3") if _arm_rhat(b) is not None
+    }
+
+    # --- G9-NOV simultaneous margin: COMMON SUPPORT FIRST, then fail-closed --
+    g9_nov_margin_ci_low = None
+    g9_nov_detail = None
+    nov_arms = {a: arm_pairs[a] for a in ("PROPOSED", "B1", "B2", "B3") if a in arm_pairs}
+    if "PROPOSED" in nov_arms and len(nov_arms) >= 2:
+        aligned = common_support_pairs(nov_arms)  # intersection FIRST (refinement 4)
+        proposed_aligned = aligned.pop("PROPOSED", [])
+        baselines_aligned = {b: ps for b, ps in aligned.items() if ps}
+        if proposed_aligned and baselines_aligned:
+            margin = g9_nov_margin_simultaneous(
+                proposed_aligned,
+                baselines_aligned,
+                weights=weights,
+                n_bootstrap=int(getattr(args, "bootstrap", 10000) or 10000),
+                enforce_common_support=True,  # fail-closed on any residual key mismatch
+            )
+            g9_nov_margin_ci_low = margin.margin_ci_low
+            g9_nov_detail = {
+                "margin_point": margin.margin_point,
+                "margin_ci_low": margin.margin_ci_low,
+                "margin_ci_high": margin.margin_ci_high,
+                "argmax_baseline": margin.argmax_baseline,
+                "n_common_support_pairs": len(proposed_aligned),
+                "clears_zero": margin.clears_zero,
+            }
+
+    # --- B4 within-g matched-null repair control CI -------------------------
+    b4_ci_lo, b4_ci_hi = spec["b4_ci"]
+
+    # --- nuisance / selective-inference inputs ------------------------------
+    nz = spec["nuisance"]
+    gate_inputs = {
+        "n_val_sel": int(nz["n_val_sel"]),
+        "n_val_inf": int(nz["n_val_inf"]),
+        "m_prime": int(nz["m_prime"]),
+        "k_bin": int(nz.get("k_bin", 1)),
+        "k_op": int(spec["k_op"]),
+        "m_r0": float(nz["m_r0"]),
+        "kappa_lo_repair": float(nz["kappa_lo_repair"]),
+        "r_hat": r_hat_point,
+        "r_hat_ci_lo": ci_lo,
+        "r_hat_ci_hi": ci_hi,
+        "perm_p": perm_p,
+        "d_util_repair": float(spec["d_util_repair"]),
+        "positivity_excluded_frac": float(spec["positivity_excluded_frac"]),
+        "positivity_excluded_by_class": spec.get("positivity_excluded_by_class"),
+        "class_leakage_ok": bool(spec["class_leakage_ok"]),
+        "b4_ci_lo": float(b4_ci_lo),
+        "b4_ci_hi": float(b4_ci_hi),
+        "r_hat_proposed": float(r_hat_proposed),
+        "r_hat_baselines": {b: float(v) for b, v in detector_baselines.items()},
+        "g9_nov_margin_ci_low": g9_nov_margin_ci_low,
+    }
+    payload = {
+        "stage": "build_gate_inputs",
+        "server_authorized": False,
+        "gate_inputs": gate_inputs,
+        "g9_nov_margin_detail": g9_nov_detail,
+    }
+    # write BOTH the wrapped provenance payload and the bare gate_inputs.json the
+    # eval_gates loader reads (_load_gate_inputs looks for gate_inputs.json).
+    _write_json(out / "build_gate_inputs.json", payload)
+    h = _write_json(out / "gate_inputs.json", gate_inputs)
+    return {"output_hash": h, "row_count": 1,
+            "g9_nov_margin_ci_low": g9_nov_margin_ci_low,
+            "k_op": gate_inputs["k_op"]}
 
 
 def run_adversarial_oracle(args, plan) -> dict:
@@ -597,13 +760,19 @@ def _load_nullpool_spec(args) -> dict:
     return data
 
 
-def _load_repair_gain_rows(args) -> list[dict]:
+def _load_repair_gain_rows(args) -> tuple[list[dict], dict | None]:
+    """Load the g_ij repair-gain rows AND the surrounding artifact dict.
+
+    Returns ``(rows, artifact)`` where ``artifact`` is the full on-disk dict (so the
+    caller can read provenance such as the realized ``r_null_realized``); ``artifact``
+    is ``None`` when the file is a bare list of rows.
+    """
     p = _input_path(args, "pairs")
     data = _read_json(p if p.suffix == ".json" else p / "g_ij_rows.json")
     rows = data.get("rows") if isinstance(data, dict) else data
     if not isinstance(rows, list) or not rows:
         raise RunInputError(f"no g_ij repair-gain rows found in {p}")
-    return rows
+    return rows, (data if isinstance(data, dict) else None)
 
 
 def _load_class_weights(args) -> dict | None:
@@ -638,6 +807,104 @@ def _load_gate_inputs(args) -> dict:
     if missing:
         raise RunInputError(f"gate_inputs missing required fields {missing}: {p}")
     return data
+
+
+def _rows_to_pairs(rows: list[dict]) -> list[RepairGain]:
+    """Map raw g_ij row dicts to RepairGain pairs (the shape the kernels consume)."""
+    return [
+        RepairGain(
+            g=float(r["g"]),
+            mc_var=float(r.get("mc_var", 0.0)),
+            source_id=r["source_id"],
+            target_id=r["target_id"],
+            g3_class=str(r["g3_class"]),
+        )
+        for r in rows
+    ]
+
+
+def _load_gate_input_spec(args) -> dict:
+    """Resolve every artifact ``run_build_gate_inputs`` needs (read-only; actionable).
+
+    Expects ``--gate-input-spec`` (or ``--pairs``) to point at a JSON manifest that
+    names the upstream artifacts, OR an already-assembled dict carrying them inline.
+    The manifest keys (all required unless noted):
+
+    * ``rhat_proposed``        -- path to PROPOSED's ``rhat.json`` (or the inline dict);
+    * ``arm_rows``             -- mapping ``{arm: path-to-g_ij_rows.json}`` (or inline
+                                  ``{arm: {"rows": [...]}}``) for PROPOSED/B1/B2/B3/B4;
+    * ``nuisance``             -- mapping (or path) with ``n_val_sel``, ``n_val_inf``,
+                                  ``m_prime``, ``m_r0``, ``kappa_lo_repair``, ``k_bin``;
+    * ``k_op``                 -- DERIVED operator-grid cardinality: an int, or a path
+                                  to the operator_freeze artifact carrying ``k_op``;
+    * ``b4_ci``                -- ``[lo, hi]`` matched-null repair control CI;
+    * ``d_util_repair`` / ``positivity_excluded_frac`` / ``class_leakage_ok`` (and
+      optional ``positivity_excluded_by_class``) -- the G9 scalar inputs.
+
+    Anything missing raises :class:`RunInputError`; no field is fabricated.
+    """
+    p = _input_path(args, "gate_input_spec", "pairs")
+    man = _read_json(p if p.suffix == ".json" else p / "gate_input_spec.json")
+    if not isinstance(man, dict):
+        raise RunInputError(f"gate-input spec must be a JSON object: {p}")
+    base = p.parent if p.suffix == ".json" else p
+
+    def _resolve_doc(val, default_name: str):
+        """A value may be an inline dict or a path (abs or relative to the manifest)."""
+        if isinstance(val, dict):
+            return val
+        if isinstance(val, str):
+            sub = Path(val)
+            if not sub.is_absolute():
+                sub = base / sub
+            return _read_json(sub if sub.suffix == ".json" else sub / default_name)
+        raise RunInputError(f"expected a dict or path, got {type(val).__name__}")
+
+    for key in ("rhat_proposed", "arm_rows", "nuisance", "k_op", "b4_ci",
+                "d_util_repair", "positivity_excluded_frac", "class_leakage_ok"):
+        if key not in man:
+            raise RunInputError(f"gate-input spec missing '{key}': {p}")
+
+    rhat_proposed = _resolve_doc(man["rhat_proposed"], "rhat.json")
+
+    arm_rows: dict[str, list[dict]] = {}
+    for arm, ref in man["arm_rows"].items():
+        doc = _resolve_doc(ref, "g_ij_rows.json")
+        rows = doc.get("rows") if isinstance(doc, dict) else doc
+        if isinstance(rows, list) and rows:
+            arm_rows[str(arm).upper()] = rows
+
+    nuisance = _resolve_doc(man["nuisance"], "nuisance_gate.json")
+    for key in ("n_val_sel", "n_val_inf", "m_prime", "m_r0", "kappa_lo_repair"):
+        if key not in nuisance:
+            raise RunInputError(f"gate-input nuisance missing '{key}': {p}")
+
+    # k_op: an int, or a path to operator_freeze carrying the DERIVED cardinality.
+    k_op_ref = man["k_op"]
+    if isinstance(k_op_ref, (int, float)):
+        k_op = int(k_op_ref)
+    else:
+        of_doc = _resolve_doc(k_op_ref, "operator_freeze.json")
+        if not isinstance(of_doc, dict) or "k_op" not in of_doc:
+            raise RunInputError(f"operator-freeze artifact missing 'k_op': {k_op_ref}")
+        k_op = int(of_doc["k_op"])
+
+    b4 = man["b4_ci"]
+    if not isinstance(b4, (list, tuple)) or len(b4) != 2:
+        raise RunInputError(f"gate-input 'b4_ci' must be [lo, hi]: {p}")
+
+    return {
+        "rhat_proposed": rhat_proposed,
+        "arm_rows": arm_rows,
+        "nuisance": nuisance,
+        "k_op": k_op,
+        "b4_ci": (b4[0], b4[1]),
+        "d_util_repair": man["d_util_repair"],
+        "positivity_excluded_frac": man["positivity_excluded_frac"],
+        "positivity_excluded_by_class": man.get("positivity_excluded_by_class"),
+        "class_leakage_ok": man["class_leakage_ok"],
+        "class_weights": man.get("class_weights"),
+    }
 
 
 # --------------------------------------------------------------------------- #

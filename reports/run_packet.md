@@ -807,3 +807,105 @@ Gates"), not a bare `--resume`.
 - It claims no Stage-1 readiness: REDESIGN_v5 is `design_frozen_stage1_RR`; the
   v5 modules are implemented and unit-tested, but the executable-preregistration
   run remains gated on the §1 authorization flip that has not happened.
+
+---
+
+## 8. v6 verified-repo baselines — run approach + single-GPU schedule
+
+> **v6 delta (REDESIGN_v6, ARIS v6).** The headline matched model is
+> **Qwen2.5-7B-Instruct** (`ar_lead_qwen`, PRIMARY; Llama-3.1-8B-Instruct
+> SECONDARY; 1.5B = smoke/contract only). The comparison locks a `>=8`
+> OFFICIAL-REPO verified-repo suite. This section adds **how each baseline is run**
+> (re-score to segment-level `Û` + identical repair pipeline) and the
+> **single-RTX-4090 inference-only schedule**. All numbers `DATA_NEEDED`;
+> `server.authorized: false`. Roster + repos: `BASELINES.md`,
+> `configs/baselines/baseline_registry.yaml`.
+
+### 8.1 Per-baseline run approach (all on Qwen2.5-7B-Instruct / TriviaQA + HotpotQA)
+
+Each verified-repo baseline runs under the **identical** setup as PROPOSED
+(matched model, datasets, splits, evaluator, seeds; §0/§1). The only per-baseline
+difference is its **native signal** and a **declared, hashed segment adapter**.
+Two steps for every baseline:
+
+1. **Re-score to segment-level `Û`** (`ciu_scored: true`). The baseline's native
+   output-/representation-/sampling-level signal is mapped to a per-segment score
+   via its registry `segment_adaptation` (identical-across-baselines adapter
+   family, `adapter_hash` pinned at authorization). This feeds the screening /
+   detection tables (AUROC for DETECTION comparators; the segment-localization
+   margin G1/G6/G7 for the LOCALIZATION controls).
+2. **Identical repair pipeline (G9-NOV).** The baseline's selected span is fed
+   through the **same** `repair_ops` pipeline PROPOSED uses (Variant C
+   source-derived policy + frozen anchor map `T`), so `R̂(baseline)` is computed on
+   the same footing as `R̂(PROPOSED)`. A strong baseline therefore *helps* itself —
+   the fairness incentive is symmetric.
+
+| Baseline | Venue | class | Native signal → segment `Û` re-score | Repair (G9-NOV) |
+| --- | --- | --- | --- | --- |
+| ReDeEP | ICLR 2025 | detection | decoupled external/parametric knowledge → localize to segment layers/heads | identical pipeline |
+| RACE | AAAI 2026 | detection | answer-reasoning consistency → per reasoning segment | identical pipeline |
+| LapEigvals | EMNLP 2025 | detection | Laplacian-eigenvalue attention features → segment attention submatrix | identical pipeline |
+| HaloScope | NeurIPS 2024 | detection | unlabeled-gen membership subspace → segment hidden states | identical pipeline |
+| Lookback-Lens | EMNLP 2024 | detection | attention context-vs-generation ratio → per segment | identical pipeline |
+| MIND | ACL 2024 (F) | detection | unsupervised internal-state signal → segment hidden states | identical pipeline |
+| INSIDE/EigenScore | ICLR 2024 | detection | internal-state covariance eigenscore → segment hidden states | identical pipeline |
+| Semantic Entropy | Nature 2024 | detection | meaning-level sampling uncertainty → segment-conditioned resamples | identical pipeline |
+| SelfCheckGPT | EMNLP 2023 | detection | NLI sampling consistency → segment-aligned resamples | identical pipeline |
+| Captum IG | attribution control | **localization** | integrated-gradient token attributions → segment importance; **scored on G1/G6/G7 margin, not AUROC** | identical pipeline |
+| Causal Mediation | NeurIPS 2020 | **localization** | indirect-effect over components → segment components; **scored on G1/G6/G7 margin, not AUROC** | identical pipeline |
+
+- **DETECTION baselines** map onto the §3.4 screening stage (`run_intervention.py
+  --stage screening`) for `Û`/AUROC, then onto the §3.6 repair-transfer stage as
+  B2/B3-style selectors (`run_repair_transfer.py --stage repair_transfer`,
+  `--selector ...`) for `R̂`.
+- **LOCALIZATION controls** (Captum-IG, Causal Mediation) are the attribution
+  neighbours the necessity certification competes with most directly: scored on the
+  **segment-localization margin** (G1 necessity / G6-G7 leakage), not AUROC, and
+  also fed through the identical repair pipeline for G9-NOV.
+- **B1 = TraceDet-derived AR span adapter** (`repair_ops.tracedet_ar_span_adapter`)
+  is **our own re-cast span selector** (not the TraceDet diffusion detector, which is
+  cited-not-reproduced; see `BASELINES.md` §4). It runs exactly as a §3.6 selector.
+- **Preflight (extends §1.2).** Every verified-repo baseline must have its
+  `implementation_source: official_repo` commit pinned and license verified, and an
+  audited `segment_adapter` hash, before any arm runs; the run is **blocked** while
+  any baseline carries `pending_before_server_run`
+  (`ciu.baseline_readiness`). A baseline without an audited adapter is AUROC-only and
+  excluded from the `R̂` table.
+
+### 8.2 Single-RTX-4090 inference-only schedule
+
+The v6 hardware tier is a **single RTX 4090 (24 GB), inference-only** (no training).
+Schedule:
+
+1. **Recompute `c_fwd` at 7B FIRST** (before committing cell count). Run the §3.2
+   timing calibration (`extract_traces.py --calibrate-cfwd ... --split v_sel`) on
+   **Qwen2.5-7B-Instruct**; the v5 feasible point (`c_fwd <= 4.57e-4` at the 2-cell
+   screening line) was sized at an earlier scale and **must be re-measured** at 7B.
+   This is a timing measurement, not an experiment.
+2. **Re-check the budget identity** `cells * n * forwards_per_example * c_fwd <=
+   budget_gpu_hr` with the re-measured 7B `c_fwd` AND the v5 G9 repair surcharge
+   `forwards_per_example_v5 = 1 + R_null + R_int` (per repair-panel selector). If
+   the recomputed total exceeds budget, apply the v5 `decision_order` (request budget
+   → reduce cells → reduce `R_null`/`R_int` to the variance-floored minimum).
+3. **PRIMARY 2-cell first.** Run Qwen2.5-7B-Instruct × {TriviaQA, HotpotQA} (the
+   pre-registered confirmatory point) first; the SECONDARY Llama-3.1-8B 4-cell grid
+   is **gated** behind the re-checked `c_fwd` + surcharge clearing the 4-cell
+   ceiling.
+4. **Memory fit.** Qwen2.5-7B-Instruct in bf16/fp16 (≈14-15 GB weights) + the
+   `patch`/`replay` activation cache fits a 24 GB 4090 at batch-1/small-batch. The
+   §6.3 OOM ladder (halve batch → microbatch=1 → activation offload) applies;
+   `R_int`, `n`, frozen `R_null`, and seeds are **never** reduced to fit memory —
+   only batch/microbatch knobs move.
+5. **Inference-only forwards.** Generation, hidden-state reads, `patch`/`replay`,
+   Captum-IG backward attributions (frozen model, no weight update), and Causal
+   Mediation restore-and-read forwards are all inference-time; no gradient step
+   updates any weight.
+6. **Method-iteration loop budget (REDESIGN_v6 §5).** If G1/G9-NOV do not clear at
+   7B, the capped method-iteration loop re-runs within this single-GPU envelope (cap
+   = `method_iteration_cap`, `DATA_NEEDED`, pinned at authorization); each iteration
+   re-freezes operators on `V_sel` and is paid for in the SI `K_op` factor. Never
+   alter data / splits / evaluator / seeds / baselines to pass; never fabricate.
+
+All schedule numbers (`c_fwd` at 7B, `forwards_per_example`, GPU-hours, wall-clock,
+`method_iteration_cap`) are **`DATA_NEEDED`**, measured/pinned at the authorized run.
+`server.authorized: false`; this section authorizes no run.

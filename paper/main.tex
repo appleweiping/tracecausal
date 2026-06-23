@@ -9,13 +9,21 @@
 % numerics that appear are closed-form / quadrature checks, each labelled "formula
 % evaluation, not evidence" --- they are design arithmetic, not measurements.
 %
-% HEADLINE (v5): causal localization CERTIFIED BY INTERVENTION USEFULNESS via
-% cross-example repair-transfer (gate G9) atop the CIU matched-null estimand. The
-% within-example necessity statistic U_hat (the v4 headline) is demoted to a
-% screening statistic; the cross-example repair-transfer statistic R_hat is the
-% headline certification, under named assumptions A5--A9 and Identification
-% Lemma 5.1, with two-way cluster-bootstrap / class-block-permutation inference,
-% selective-inference correction, and an adversarial-oracle Axis X'.
+% HEADLINE (v5): a matched-null, selective-inference-correct CERTIFICATION
+% PROTOCOL for intervention-usefulness localization in hallucination tracing ---
+% the CIU screening estimand plus the cross-example repair-transfer certification
+% (R_hat / gate G9), with two-way cluster-bootstrap / class-block-permutation
+% inference, selective-inference correction, and an adversarial graded oracle
+% (Axis X'). The protocol issues a falsifiable, multiplicity-correct certificate
+% that a localization's targeted, training-free edits TRANSFER to held-out
+% in-class targets and beat detector-selected localizations (G9-NOV) --- a
+% guarantee detection alone cannot provide. The within-example necessity statistic
+% U_hat (the v4 headline) is demoted to a screening statistic; the cross-example
+% repair-transfer statistic R_hat is the headline certification. The CAUSAL
+% reading is a SECONDARY, CONDITIONAL application: under the registered
+% assumptions A5--A9 and Identification Lemma 5.1, a certified localization
+% additionally admits a causal-usefulness interpretation, but the protocol's value
+% does not depend on that reading.
 %
 % server.authorized stays false. Empirical validation follows the pre-registered
 % analysis plan (Sec. ref{sec:setup}).
@@ -81,9 +89,10 @@
 }
 \newcommand{\dn}{\textcolor{red}{\textbf{[DATA\_NEEDED]}}}
 
-\title{\textbf{Repair-Transfer-Certified Trace Localization:\\
-Certifying Causal Usefulness of Hallucination Localizations by\\
-Cross-Example Intervention Transfer}\\[2pt]
+\title{\textbf{A Matched-Null, Selective-Inference-Correct Certification\\
+Protocol for Intervention-Usefulness Localization in\\
+Hallucination Tracing}\\[2pt]
+\large Repair-Transfer Certification (with a Conditional Causal Reading) ---\\
 \large A Pre-registered Stage-1 Registered Report}
 
 \author{Anonymous Author(s)\\ \small (under double-blind review)}
@@ -96,46 +105,52 @@ Cross-Example Intervention Transfer}\\[2pt]
 \begin{abstract}
 %==============================================================================
 Hallucination \emph{detection} answers a predictive question --- is this output
-false? --- but a localization is only causally meaningful if intervening on it
-\emph{does something}. We argue that the right bar is not ``can we measure an
-above-pool causal contrast honestly'' (an infrastructure claim) but ``can the
-localization \emph{license a reusable repair} that a detector cannot.'' We
-operationalize this as \textbf{repair-transfer certification}: a trace segment is
-certified causally useful for a hallucination class when a training-free,
+false? --- but a detector never tells you whether intervening on the localized
+segment \emph{does anything}, and existing causal tracing gives no falsifiable,
+multiplicity-correct \emph{certificate} that a localization is actionably useful.
+Our central contribution is exactly such a certificate: a \textbf{matched-null,
+selective-inference-correct certification protocol} for intervention-usefulness
+localization. The protocol couples (i) the matched-null Causal
+Intervention-Usefulness (CIU) screening estimand $\Uhat$ --- a per-example null
+pool matched on operator, budget, length, layers, reference, and example --- with
+(ii) a \textbf{cross-example repair-transfer certification} $\Rhat$ (gate G9): a
+trace segment is \emph{certified} for a hallucination class when a training-free,
 source-derived localized repair \emph{policy}, applied to held-out in-class
-\emph{target} examples, recovers factuality beyond a matched-null repair, at a
-bounded edit budget and a bounded utility cost. The certification statistic
-$\Rhat$ (cross-example, repair-style) is the headline; the within-example
-necessity statistic $\Uhat$ --- a matched-null Causal Intervention-Usefulness
-(CIU) estimand with a per-example null pool matched on operator, budget, length,
-layers, reference, and example --- is demoted to a \emph{screening} statistic.
-We name the source$\to$target transport map and the five assumptions (A5--A9:
-SUTVA-for-repair, within-class exchangeability, positivity, reference validity,
-matched-null repair validity) under which $\Rhat$ is an identified causal
-estimand, and prove an \textbf{identification lemma} (Lemma~\ref{lem:rident})
-that splits the assumption-free part (a definitional matched-null subtraction)
-from the assumption-loaded causal part, mirroring the CIU tautology/assumption
-split. Because example indices recur across many pairs, $\Rhat$ is treated as a
+\emph{target} examples, recovers factuality beyond a matched-null repair at a
+bounded edit budget and a bounded utility cost. The certificate is what detection
+cannot supply: it distinguishes localizations whose targeted, training-free edits
+\emph{transfer} to held-out in-class targets and \emph{beat} detector-selected
+localizations (gate G9-NOV) from those that do not. The certification statistic
+$\Rhat$ is the headline; $\Uhat$ is demoted to a \emph{screening} statistic.
+Because example indices recur across many pairs, $\Rhat$ is treated as a
 within-class \textbf{U-statistic} with a confirmatory \textbf{two-way
 (source,target) cluster bootstrap} CI, corroborated by a \textbf{class-block
-sign-flip diagnostic}, not a paired bootstrap. Every data-adaptive choice --- the proximity binning, the repair
-policy, the class weights --- is a \textbf{selection event} paid for by a
-selection split or a Bonferroni penalty over an enumerated grid. The crucial
-contrast is made \emph{empirical}, not rhetorical: a baseline panel B0--B5 feeds
-detector-selected localizations (TraceDet-, entropy-, probe-selected) through the
-\emph{identical} repair pipeline, and our novelty is \emph{conditional} on
-out-transferring them. An adversarial oracle (Axis X$'$) includes a
-\emph{provable} control-failure regime: a confounder collinear with the leakage
-controls that they cannot see, where the registered, falsifiable prediction is
-that $\Rhat$ itself collapses --- and if it does not, the paper reports the
-method unsound for that confounder class. The lead paradigm is autoregressive
-LLMs; reasoning and diffusion are a transfer study, with TraceDet additionally
-entering as a repair-baseline. This paper states the method, discharges the
-theory, and pre-registers the full analysis plan and kill-gates. \textbf{No
-empirical result is reported}: every table and figure is a
+sign-flip diagnostic}, not a paired bootstrap; and every data-adaptive choice ---
+the proximity binning, the repair policy, the class weights --- is a
+\textbf{selection event} paid for by a selection split or a Bonferroni penalty
+over an enumerated grid. The contrast with detection is made \emph{empirical}, not
+rhetorical: a baseline panel B0--B5 feeds detector-selected localizations
+(TraceDet-, entropy-, probe-selected) through the \emph{identical} repair
+pipeline, and the certificate of novelty is \emph{conditional} on out-transferring
+them. An \textbf{adversarial graded oracle} (Axis X$'$) includes a \emph{provable}
+control-failure regime: a confounder collinear with the leakage controls that they
+cannot see, where the registered, falsifiable prediction is that $\Rhat$ itself
+collapses --- and if it does not, the paper reports the method unsound for that
+confounder class. \textbf{The causal interpretation is a secondary, conditional
+application:} under the registered assumptions A5--A9 (in particular
+reference-validity A8, which is acknowledged to be non-identifiable on real
+observational AR-LLM traces --- a limitation shared by all activation-patching
+causal tracing) and Identification Lemma~\ref{lem:rident}, a certified
+localization \emph{additionally} admits a causal-usefulness reading; the
+protocol's value (a reproducible, baseline-beating, selective-inference-correct
+certificate) does \emph{not} depend on that causal reading holding. The lead
+paradigm is autoregressive LLMs; reasoning and diffusion are a transfer study,
+with TraceDet additionally entering as a repair-baseline. This paper states the
+method, discharges the theory, and pre-registers the full analysis plan and
+kill-gates. \textbf{No empirical result is reported}: every table and figure is a
 \textsc{data\_needed} placeholder, and \emph{empirical validation follows the
 pre-registered, authorized run} (\texttt{server.authorized} remains
-\texttt{false}). The contribution is the certified estimand and its
+\texttt{false}). The contribution is the certification protocol and its
 identification design.
 \end{abstract}
 
@@ -143,9 +158,10 @@ identification design.
 \section{Introduction}\label{sec:intro}
 %==============================================================================
 
-\paragraph{The gap: detection $\ne$ causal usefulness.} Large language models
-hallucinate, and a large literature now \emph{detects} hallucinations from output
-uncertainty, sampling consistency, or internal states
+\paragraph{The gap: detection $\ne$ actionable usefulness, and no falsifiable
+certificate of usefulness exists.} Large language models hallucinate, and a large
+literature now \emph{detects} hallucinations from output uncertainty, sampling
+consistency, or internal states
 \cite{farquhar2024semantic,manakul2023selfcheckgpt,chen2024inside,ji2023survey}.
 Detection answers a predictive question --- \emph{is this output likely false?}
 The closest neighbours to this work operate on \emph{traces} but still ask a
@@ -154,38 +170,55 @@ information-bottleneck sub-trace of a diffusion decoding trace and reports a
 concrete downstream win ($+15.2\%$ AUROC average); fine-grained causal tracing in
 vision-language models (\textbf{FCCT}/\textbf{IRI}) \cite{li2026fcct} quantifies a
 fixed-grid \emph{recovery rate} of components under Gaussian perturbation. Neither
-asks whether a \emph{localization} is causally useful in the operational sense
-that matters for auditing: \emph{does editing it license something a detector
-cannot}? A segment can be highly predictive of hallucination yet causally inert (a
-symptom), and causally decisive yet carry no salient detector signal. The two
-questions come apart precisely where intervention matters.
+asks whether a \emph{localization} is \emph{actionably useful} in the operational
+sense that matters for auditing: \emph{does editing it license a reusable,
+training-free repair that a detector cannot}? A segment can be highly predictive of
+hallucination yet intervention-inert (a symptom), and intervention-decisive yet
+carry no salient detector signal; the two questions come apart precisely where
+intervention matters. And critically, even the activation-patching causal-tracing
+line gives \emph{no falsifiable, multiplicity-correct certificate} that a
+localization is useful: a fixed-grid recovery rate read off the same example, with
+no matched null, no selection correction, and no out-of-sample transfer test, is
+not a certificate a skeptical auditor can attack. \textbf{The missing object is a
+falsifiable, baseline-beating, multiplicity-correct \emph{certificate} of
+intervention-transfer usefulness}, and that certificate --- not the causal
+interpretation it may later license --- is this paper's central contribution.
 
 \paragraph{Why ``honest measurement'' is not enough.} A natural first answer ---
 and the answer of the matched-null CIU estimand we build on (Sec.~\ref{sec:ciu})
---- is to \emph{measure} an above-pool causal contrast honestly: edit the selected
-segment, edit a budget/length/layer/reference/example-matched random segment, and
-report the difference. That is leakage-safe and reproducible, but it certifies the
-claim by \emph{internal consistency}: the estimator is unbiased for a contrast the
-method itself defines, and every internal control checks that the \emph{estimator}
-is well-behaved --- never that the localized segment is \emph{useful for anything
-a detector cannot already do}. Honest measurement of a self-defined quantity reads
-as infrastructure, not discovery. A top-venue contribution needs ``we can do $X$
-that prior work cannot, here is the falsifiable test that $X$ holds.'' This paper's
-$X$ is: \emph{the localization licenses a reusable, training-free repair that
-transfers across examples beyond a matched-null repair, and beats
-detector-selected localizations fed through the identical repair pipeline}.
+--- is to \emph{measure} an above-pool intervention contrast honestly: edit the
+selected segment, edit a budget/length/layer/reference/example-matched random
+segment, and report the difference. That is leakage-safe and reproducible, but it
+certifies the claim by \emph{internal consistency}: the estimator is unbiased for a
+contrast the method itself defines, and every internal control checks that the
+\emph{estimator} is well-behaved --- never that the localized segment is
+\emph{useful for anything a detector cannot already do}. Honest measurement of a
+self-defined quantity reads as infrastructure, not a certificate. A top-venue
+contribution needs ``we can issue a certificate of $X$ that prior work cannot, here
+is the falsifiable test that $X$ holds.'' This paper's $X$ is
+\emph{intervention-transfer usefulness}: \emph{the localization licenses a
+reusable, training-free repair that transfers across examples beyond a matched-null
+repair, and beats detector-selected localizations fed through the identical repair
+pipeline}.
 
-\paragraph{The central object: repair-transfer certification.} We define a trace
-segment to be \textbf{repair-transfer-certified} for a hallucination class when a
+\paragraph{The central object: a repair-transfer certificate of
+intervention-transfer usefulness.} We define a trace segment to be
+\textbf{repair-transfer-certified} for a hallucination class when a
 \emph{training-free, source-derived localized repair policy}, applied to held-out
 in-class \emph{target} examples, recovers factuality beyond a matched-null repair,
 at a bounded edit budget and bounded utility cost --- under the registered
 operator, transport map, reference construction, class partition, and matched-null
-assumptions (A5--A9, Sec.~\ref{sec:method:assump}). Certification is
-\emph{sufficient} evidence of causal usefulness, not a definition of it: a segment
-may be causally necessary in place yet not single-span-repairable, and a generic
-repair may transfer for non-causal reasons. We therefore drop any ``iff'' framing
-and scope the claim to the registered design. The headline statistic is the
+assumptions (A5--A9, Sec.~\ref{sec:method:assump}). The certificate is, in the
+first instance, a statement about \emph{intervention-transfer usefulness}: it is
+falsifiable (the transfer can fail), baseline-relative (it must beat
+detector-selected localizations through the identical pipeline, G9-NOV), and
+multiplicity-correct (every adaptive choice is paid for) --- and none of that
+depends on a causal interpretation. \textbf{Separately, and conditionally},
+certification is \emph{sufficient} evidence of \emph{causal} usefulness under
+A5--A9, not a definition of it: a segment may be causally necessary in place yet
+not single-span-repairable, and a generic repair may transfer for non-causal
+reasons. We therefore drop any ``iff'' framing and scope the causal reading to the
+registered design (Sec.~\ref{sec:theory:rident}). The headline statistic is the
 cross-example repair-transfer estimand $\Rhat$; the within-example necessity
 statistic $\Uhat$ (the matched-null CIU estimand) is demoted to a \emph{screening}
 statistic. The patching/repair machinery, idle in a measurement-only design,
@@ -193,19 +226,19 @@ becomes the star.
 
 \paragraph{The unifying principle.} One sentence states the whole paper:
 \begin{quote}\itshape
-Counterfactual usefulness must be earned out-of-sample, under a reference the
-method does not control.
+Intervention-transfer usefulness must be \emph{certified} out-of-sample, under a
+reference the method does not control.
 \end{quote}
 Three surfaces are \emph{instances} of this one principle, not additive tricks:
 (i) \textbf{certification} ($\Rhat$, gate G9) earns usefulness out-of-sample
 \emph{across examples} (held-out targets); (ii) \textbf{selective-inference
 correction} (Sec.~\ref{sec:si}) earns gate verdicts out-of-sample \emph{across the
 data-adaptive binning and the operator selection} (both are selection events that
-must be paid for); (iii) the \textbf{adversarial oracle} (Axis X$'$,
-Sec.~\ref{sec:method:oracle}) earns the reference-validity assumption
+must be paid for); (iii) the \textbf{adversarial graded oracle} (Axis X$'$,
+Sec.~\ref{sec:method:oracle}) stress-tests the reference-validity assumption
 out-of-distribution \emph{in the reference} (a regime where the reference is
 misspecified and, provably, the controls \emph{cannot} catch it, so $\Rhat$ itself
-must collapse). Remove any one and the principle is incompletely tested.
+must collapse). Remove any one and the certificate is incompletely earned.
 
 \paragraph{Why $\Rhat$ is not a second $\Uhat$.} $\Uhat$ measures
 \emph{necessity in place} (mask the source span in $x_i$, read the factuality drop
@@ -217,17 +250,20 @@ transferable repair; the two are decorrelated in a scientifically interesting wa
 which is exactly why G9 is a \emph{new} falsifiable test and not a restatement of
 the necessity gate.
 
-\paragraph{The falsifiable central claim.} Our pre-registered, pre-data claim is:
+\paragraph{The falsifiable central claim.} Our pre-registered, pre-data claim is
+about the certificate, not the causal reading:
 \begin{quote}\itshape
-If hallucination in autoregressive LLMs admits localizable causal segments whose
-localization licenses a reusable repair, and the matched-null repair pool is a
-valid counterfactual within the stated leakage and reference bounds, then the
-cross-example repair-transfer estimand $\Rhat$ clears the repair margin $m_R$
+If hallucination in autoregressive LLMs admits localizable segments whose
+localization licenses a reusable, transferable repair, then the cross-example
+repair-transfer estimand $\Rhat$ clears the repair margin $m_R$
 (Holm/selective-inference-corrected two-way-cluster-bootstrap CI lower bound above
 $m_R$, class-block-permutation $p<\alpha_1'$) with bounded utility cost
 $\Dutilr\le0.02$ and bounded positivity loss on at least two lead datasets, and
 the CIU localization out-transfers the best detector-selected localization through
-the identical repair pipeline (gate G9-NOV).
+the identical repair pipeline (gate G9-NOV) --- and \emph{additionally}, if the
+matched-null repair pool is a valid counterfactual within the stated leakage and
+reference bounds (A5--A9), the certified localization admits a causal-usefulness
+reading.
 \end{quote}
 This claim can lose, and each way of losing is routed to a distinct, honest
 conclusion (Sec.~\ref{sec:routing}): a transfer failure with a \emph{powered},
@@ -236,36 +272,56 @@ generic-repair pass routes to a diagnostic; a baseline match downgrades novelty;
 and a control-silent-yet-certified result under the collinear confounder withdraws
 certification and reports a soundness limitation.
 
-\paragraph{Contributions.} Concretely, this paper contributes:
+\paragraph{Contributions.} Concretely, this paper contributes, \emph{in order of
+centrality}:
 \begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
-  \item \textbf{A certified causal-usefulness estimand} $\Rhat$
-  (Eq.~\ref{eq:R}), cross-example and repair-style, with a frozen source$\to$target
-  transport map $T$ (Variant~C; Sec.~\ref{sec:method:transport}) carrying a repair
-  \emph{policy} rather than a residual state, sitting atop the matched-null CIU
-  screening statistic $\Uhat$ (Sec.~\ref{sec:ciu}).
-  \item \textbf{An identification lemma with five named assumptions.} A5--A9 make
-  every causal premise attackable; Lemma~\ref{lem:rident} splits the assumption-free
-  matched-null subtraction from the assumption-loaded causal interpretation
-  (Sec.~\ref{sec:method:assump}, Sec.~\ref{sec:theory}).
-  \item \textbf{Valid dependent-pair inference.} $\Rhat$ is a within-class
-  U-statistic \cite{hoeffding1948class,lee1990ustatistics}; inference uses a
-  two-way (source,target) cluster bootstrap \cite{cameron2011robust,owen2007pigeonhole}
-  and a class-block permutation null \cite{good2005permutation}, with a derived
-  power model $\sR$ (Eq.~\ref{eq:rvar}) that is \emph{not} the within-example
-  $\sU$ (Sec.~\ref{sec:method:inference}, Sec.~\ref{sec:setup:power}).
-  \item \textbf{Selective-inference correction.} Every data-adaptive choice is a
-  selection event, paid for by a selection split or an enumerated-grid Bonferroni
-  penalty \cite{cox1975note,fithian2014optimal,benjamini2009selective,berk2013validpostselection}
-  (Sec.~\ref{sec:si}).
-  \item \textbf{An empirical detector contrast, not a rhetorical one.} A baseline
-  panel B0--B5 runs detector-selected localizations (including TraceDet
-  \cite{tracedet2026diffusion}) through the identical repair pipeline; our novelty is
-  \emph{conditional} on out-transferring them (gate G9-NOV; Sec.~\ref{sec:method:baselines},
-  Sec.~\ref{sec:setup:gates}).
-  \item \textbf{An adversarial oracle with a provable failure regime.} Axis X$'$
-  includes a confounder collinear with the leakage controls (which therefore cannot
-  trip), where the registered prediction is that $\Rhat$ collapses; if it does not,
-  certification is withdrawn for that confounder class (Sec.~\ref{sec:method:oracle}).
+  \item \textbf{A CIU + repair-transfer certification protocol} (the headline). The
+  matched-null CIU screening estimand $\Uhat$ (Sec.~\ref{sec:ciu}) feeds a
+  cross-example, repair-style certification estimand $\Rhat$ (Eq.~\ref{eq:R}), with a
+  frozen source$\to$target transport map $T$ (Variant~C; Sec.~\ref{sec:method:transport})
+  carrying a repair \emph{policy} rather than a residual state. The protocol issues a
+  \emph{falsifiable, multiplicity-correct certificate of intervention-transfer
+  usefulness}: it certifies localizations whose targeted, training-free edits transfer
+  to held-out in-class targets and beat detector-selected localizations through the
+  \emph{identical} repair pipeline (gates G9 and G9-NOV; baseline panel B0--B5 incl.\
+  TraceDet \cite{tracedet2026diffusion}; Sec.~\ref{sec:method:baselines},
+  Sec.~\ref{sec:method:g9}) --- a guarantee detection alone cannot supply, and one
+  that does not depend on any causal reading.
+  \emph{\textbf{Scope (explicit).} The cross-example repair-transfer certificate
+  $\Rhat$/G9/G9-NOV is an \textbf{original extension that goes beyond} the question of
+  \emph{which} trace segment causes the hallucination: it asks whether a repair
+  \emph{policy} learned by localizing on one example \emph{transfers} to fix a different,
+  held-out in-class example. The within-example matched-null necessity certification
+  $\Uhat$/G1 (Sec.~\ref{sec:ciu}) is the direct training-free certification of which
+  segment is causally necessary in place; the cross-example transfer is a new extension
+  built on top of it, not a restatement of it (Sec.~\ref{sec:method:transport}).}
+  \item \textbf{The matched-null + dependent-pair + selective-inference machinery
+  that makes the certificate sound.} The per-example matched null
+  (Eq.~\ref{eq:pool}); valid dependent-pair inference --- $\Rhat$ as a within-class
+  U-statistic \cite{hoeffding1948class,lee1990ustatistics} with a two-way
+  (source,target) cluster bootstrap \cite{cameron2011robust,owen2007pigeonhole} and a
+  class-block permutation \emph{diagnostic} \cite{good2005permutation}, with a derived
+  power model $\sR$ (Eq.~\ref{eq:rvar}) that is \emph{not} the within-example $\sU$
+  (Sec.~\ref{sec:method:inference}, Sec.~\ref{sec:setup:power}); and a
+  selective-inference correction in which every data-adaptive choice is a paid-for
+  selection event \cite{cox1975note,fithian2014optimal,benjamini2009selective,berk2013validpostselection}
+  (Sec.~\ref{sec:si}). This is what makes the certificate reproducible and
+  selective-inference-correct.
+  \item \textbf{An adversarial graded oracle with a provable failure regime.} Axis
+  X$'$ includes a confounder collinear with the leakage controls (which therefore
+  cannot trip), where the registered prediction is that $\Rhat$ collapses; if it does
+  not, certification is withdrawn for that confounder class
+  (Sec.~\ref{sec:method:oracle}). The oracle stress-tests the certificate's soundness
+  exactly where the controls are blind.
+  \item \textbf{[Conditional] a causal-usefulness reading of a certified
+  localization.} \emph{Under} the registered assumptions A5--A9 --- in particular
+  reference-validity A8, acknowledged non-identifiable on real observational AR-LLM
+  traces (a limitation shared by all activation-patching causal tracing) --- and
+  Identification Lemma~\ref{lem:rident}, a certified localization \emph{additionally}
+  admits a causal-usefulness interpretation; Lemma~\ref{lem:rident} splits the
+  assumption-free matched-null subtraction from the assumption-loaded causal part
+  (Sec.~\ref{sec:method:assump}, Sec.~\ref{sec:theory:rident}). \textbf{The protocol's
+  value does not depend on this reading holding.}
   \item \textbf{A complete pre-registered analysis plan with hardened routing}: the
   necessity-only downgrade is publishable only if the transfer null is powered and
   theory-informative (Sec.~\ref{sec:setup}, Sec.~\ref{sec:routing}).
@@ -445,7 +501,8 @@ The OOD-deflated screening statistic $\Udefl$ subtracts a calibrated
 \texttt{displaced\_mass} dose-response footprint (Eq.~\ref{eq:deflate}). \textbf{In
 v5, $\Udefl$ is a screening gate (G1, preserved), not the headline}: it filters
 candidate localizations into the repair-transfer certification, which is where the
-causal-usefulness claim is earned.
+intervention-transfer-usefulness certificate is earned (and, conditionally on
+A5--A9, the causal-usefulness reading; Sec.~\ref{sec:theory:rident}).
 
 \subsection{Mask OOD deflation (preserved)}\label{sec:ciu:ood}
 
@@ -501,6 +558,35 @@ in-class span whose proximity bin to the answer matches the source span's
 If no in-class, budget-matched, proximity-matched span exists on $x_j$, the
 \textbf{positivity guard fails} and the pair $(i,j)$ is excluded and recorded (the
 A7 positivity event).
+
+\paragraph{The atomic-claim-span inventory is a proxy (documented assumption).}
+Step (i) of $T$ consumes, per target $x_j$, an inventory of candidate atomic-claim
+spans with their class, proximity bin, edit budget, and a designated-span flag.
+\textbf{Open TriviaQA/HotpotQA carry no ground-truth atomic-claim segmentation}, so we
+do not have a gold inventory and \emph{construct a proxy one deterministically} --- and
+label it as such. \textbf{Construction rule (default).} For a target with prompt length
+$L$, answer position $\mathrm{answer\_index}$, question-region start
+$\mathrm{prompt\_start}$, transport budget $k$, and the target's own top-salience
+designated window $[d_a,d_b]$: the atomic claim spans are the budget-$k$ windows on the
+\emph{non-overlapping} stride-$k$ grid over $[\mathrm{prompt\_start},L)$ --- the same
+grid the matched-null pool $\Pij$ uses --- each carrying
+$\mathrm{distance\_to\_answer}=|\mathrm{answer\_index}-b|$ (the registered proximity
+key), $\mathrm{budget}=k$, and the cell's single class; the target's own
+top-salience window $[d_a,d_b]$ is flagged designated so the transport collapse guard
+refuses to anchor onto it (anchoring the target's own oracle span would collapse
+``transfer'' into a within-target oracle repair). \textbf{Assumption encoded.} ``Atomic
+claim span'' $\approx$ ``a budget-length window on the salience/proximity grid'' and
+``designated/oracle claim'' $\approx$ ``the target's own top-salience window'': a
+claim-level segmentation, were it available, is assumed to partition the question
+region into roughly budget-length, proximity-stratified windows with the answer-bearing
+window as the designated claim. This is a faithful, reproducible structural proxy that
+keeps the positivity/collapse guards meaningful, but \textbf{the headline causal claim
+must not depend on it}: a pre-registered \emph{proxy-robustness ablation}
+(Sec.~\ref{sec:setup:proxyablation}) re-runs the identical $g_{ij}\!\to\!\Rhat\!\to$
+G9/G9-NOV pipeline under $\ge3$ alternative segmentation rules and requires the G9/G9-NOV
+verdict to be invariant; a sensitivity finding downgrades the claim. If a real claim
+segmenter is later supplied it replaces this construction and the rest of the pipeline
+is unchanged.
 
 \subsection{The estimand and its assumptions}\label{sec:method:assump}
 
@@ -700,9 +786,10 @@ the class partition,'' not a silent fix.
 
 We discharge three results. The proper-scoring identity is a closed-form check
 (``formula evaluation, not evidence''); the two identification lemmas (CIU and
-repair-transfer) are the load-bearing causal results. Both keep the same
-discipline: an \emph{assumption-free} part that sampling alone buys, cleanly split
-from an \emph{assumption-loaded} causal part.
+repair-transfer) are the load-bearing identification results. Both keep the same
+discipline: an \emph{assumption-free} part that sampling alone buys (the part the
+certificate rests on), cleanly split from an \emph{assumption-loaded} causal part
+(the conditional reading).
 
 \subsection{Propriety for the evaluator (preserved)}
 
@@ -967,6 +1054,44 @@ under SI-2, $\alpha_1'$ also pays $K_{\mathrm{bin}}K_{\mathrm{op}}$ (Eq.~\ref{eq
   $\Rightarrow$ diagnostic label.}
 \end{itemize}
 
+\subsection{Proxy-robustness ablation: the claim-span construction does not move the verdict}\label{sec:setup:proxyablation}
+
+The atomic-claim-span inventory is a documented proxy
+(Sec.~\ref{sec:method:transport}): open TriviaQA/HotpotQA carry no gold claim
+segmentation. This \emph{pre-registered, pre-data} ablation proves the headline causal
+claim does not depend on that proxy --- the G9/G9-NOV verdict is \textbf{invariant} to
+the claim-span construction rule. It re-runs the \emph{identical}
+$g_{ij}\!\to\!\Rhat\!\to$ G9/G9-NOV pipeline (no frozen kernel, estimand, gate, or
+default behavior changes) under the default plus $\ge3$ alternative segmentations,
+selected by a \texttt{-{}-claim-span-variant} flag and frozen on $V_{\mathrm{sel}}$
+alongside the operator freeze.
+\begin{itemize}[leftmargin=1.4em,itemsep=1pt]
+  \item \textbf{\texttt{salience\_grid} (default).} Non-overlapping stride-$k$ budget
+  windows (the registered behavior; the contrast baseline).
+  \item \textbf{\texttt{sentence} (alt 1).} Sentence/clause segments of the question
+  region, snapped to budget-$k$ windows (a \emph{linguistic} claim unit).
+  \item \textbf{\texttt{stride\_half} (alt 2).} Budget-$k$ windows on a denser
+  stride-$k/2$ grid (a different fixed-window stride).
+  \item \textbf{\texttt{salience\_threshold} (alt 3).} Only windows clearing a
+  pre-registered salience quantile $q$ (a content-selective inventory).
+\end{itemize}
+\textbf{Invariance criterion (pre-registered).} Let $M(v)=\Rhat(\text{PROPOSED})-\max_b\{\Rhat(\text{B1..B3})\}$
+under variant $v$ with simultaneous lower CI $M_{\mathrm{lo}}(v)$ and G9 verdict
+$\mathrm{G9}(v)$. The proxy is \emph{robust} iff for all
+$v$: (1) $\mathrm{sign}(M(v))$ and the significance $M_{\mathrm{lo}}(v)>0$ agree with
+the default (G9-NOV does not flip); (2) $\mathrm{G9}(v)$ equals the default on the same
+$\ge2$ lead cells; (3) $|M(v)-M(\texttt{salience\_grid})|$ is reported, and a drift
+beyond a $V_{\mathrm{sel}}$-pinned tolerance (a fraction of $m_R$; \texttt{DATA\_NEEDED})
+is flagged. \textbf{Fail action.} If any variant flips the sign/significance or the G9
+verdict, the proxy is \emph{claim-span-sensitive} and the \textbf{core causal claim is
+downgraded}: the headline routes to R2 (protocol) or R3 (necessity-only, gated), not R1,
+and the paper states that certification is \emph{conditional on the claim segmentation}.
+This ablation is \textbf{secondary/diagnostic}: it does not enter the confirmatory Holm
+family (no $m'$ inflation). All variants are run and reported --- silently keeping a
+passing variant, dropping a failing one, or re-tuning the proxy is forbidden. Every
+per-variant $\Rhat$/margin/verdict is \texttt{DATA\_NEEDED} until the authorized run;
+\texttt{server.authorized} stays \texttt{false}.
+
 \subsection{Leakage-safe nuisance estimation and the $\sR$ power model}\label{sec:setup:power}
 
 Nuisance parameters that set the power budget are estimated \emph{only} on
@@ -1072,7 +1197,9 @@ necessity-only downgrade is \emph{conditional and powered}, not a default escape
 hatch.
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt]
   \item \textbf{R1 (full certification).} G9 + G9-NOV + the Axis X$'$ predictions
-  pass $\Rightarrow$ the headline causal repair-transfer claim, scoped by A5--A9.
+  pass $\Rightarrow$ the headline repair-transfer \emph{certificate} of
+  intervention-transfer usefulness holds; \emph{conditionally} on A5--A9 it
+  additionally licenses the causal-usefulness reading.
   \item \textbf{R2 (necessity + protocol).} G9 fails but the certification
   \emph{protocol} (matched-null + selective inference) is itself a validated
   contribution and B1--B3 lose $\Rightarrow$ report the protocol as the contribution
@@ -1249,16 +1376,19 @@ We carry the design's caveats forward honestly.
   publishable only via R3 --- a \emph{powered} ($n\ge R_{\mathrm{power}}$) and
   \emph{theory-informative} (pre-registered mechanism) null --- else it is
   ``inconclusive, request budget.''
-  \item \textbf{Construct validity: certification is sufficient, not necessary --- and
-  neither may be reliable.} A segment may be causally necessary in place yet not
-  single-span-repairable, and a generic repair may transfer for non-causal reasons; we
-  drop ``iff'' and scope the claim to the registered design (A5--A9). A skeptical
-  reviewer can press further: the chosen operationalization (``repair-transfer $=$
-  causal usefulness'') is neither necessary nor reliably sufficient for the construct,
-  so even a clean R1 (full certification) demonstrates a narrow, operator-/transport-/
-  class-partition-dependent phenomenon, not the general claim a title might imply. We
-  accept this scoping explicitly; the screening $\Uhat$ captures necessity that $\Rhat$
-  may miss, and we do not claim the construct beyond the registered operators.
+  \item \textbf{Construct validity of the \emph{conditional} causal reading: it is
+  sufficient, not necessary --- and neither may be reliable.} This caveat concerns the
+  secondary causal-usefulness reading, not the headline certificate. A segment may be
+  causally necessary in place yet not single-span-repairable, and a generic repair may
+  transfer for non-causal reasons; we drop ``iff'' and scope the causal reading to the
+  registered design (A5--A9). A skeptical reviewer can press further: the chosen
+  operationalization (``repair-transfer $=$ causal usefulness'') is neither necessary
+  nor reliably sufficient for the causal construct, so even a clean R1 demonstrates a
+  narrow, operator-/transport-/class-partition-dependent phenomenon, not a general
+  causal claim. The headline certificate of intervention-transfer usefulness is
+  unaffected by this: it makes no general-construct claim. We accept this scoping
+  explicitly; the screening $\Uhat$ captures necessity that $\Rhat$ may miss, and we do
+  not claim the causal construct beyond the registered operators.
   \item \textbf{The detector contrast is empirical and can lose.} If a
   detector-selected span (B1--B3) out-transfers PROPOSED through the identical
   pipeline (G9-NOV fails), the contribution shrinks to ``the matched-null +
@@ -1274,29 +1404,39 @@ We carry the design's caveats forward honestly.
   need, so we do \emph{not} claim it is exact for $R=0$ (the earlier
   ``exact-by-construction under A6'' assertion is withdrawn). The primary $p$-value
   therefore does not borrow validity from the very A6 premise it helps probe.
-  \item \textbf{A8 (reference validity) is the one substantive cross-example
-  assumption, and it is non-identifiable on real AR-LLM traces.} Axis X$'$-blind is,
-  to our knowledge, the first oracle in this line that \emph{provably can fail} (a
-  confounder collinear with the controls); the paper claims only ``$\Rhat$ collapses
-  on the planted X$'$-detectable and X$'$-blind confounder classes,'' explicitly
-  \emph{not} ``robust to all confounding.'' We state the sharper concession plainly:
-  the X$'$-blind regime discharges A8 only on a \emph{synthetic} generator whose
-  $\Rhat$ collapse ($\text{transferred}=\tau_0(1-\xi)$) and whose control silence are
-  \emph{hand-coded identities}, so this ``provable failure regime'' is a correctness
-  fixture (a unit test promoted to a falsification), \emph{not} an adjudication of the
-  real-data causal question. On real AR-LLM traces A8 remains non-identifiable; the
-  oracle bounds the \emph{method's} behaviour under a known confounder, it does not
-  certify A8 holds in the wild. This is the single substantive premise a skeptical
-  reviewer may decline to credit, and we do not claim the oracle removes it.
-  \item \textbf{The headline causal claim is unfalsifiable at Stage-1 (no data yet).}
-  Every empirical slot is \textsc{data\_needed} and \texttt{server.authorized} is
-  \texttt{false}, so this submission asks acceptance of the \emph{protocol} and its
-  closed-form identities over synthetic fixtures, not of a certified causal result. A
-  top venue may reasonably decline to credit the causal \emph{headline} (as opposed to
-  the certification protocol) before any data exists. We state this as an accepted
-  acceptance risk, not a resolved one: what is falsifiable \emph{now} is the machinery
-  (the green do-not-run harness); the causal claim is falsifiable only after the
-  authorized run.
+  \item \textbf{Scoping note (not a headline liability): A8 (reference validity) is
+  the one substantive assumption of the \emph{conditional} causal reading, and it is
+  non-identifiable on real AR-LLM traces.} Because the causal interpretation is a
+  secondary, conditional application (Sec.~\ref{sec:intro}, contribution~4) and the
+  certificate of intervention-transfer usefulness does not rely on it, A8's
+  non-identifiability scopes the causal reading rather than threatening the headline
+  contribution --- but we keep the disclosure in full. A8 non-identifiability is a
+  limitation \emph{shared by all activation-patching causal tracing} (ROME, FCCT/IRI,
+  and the causal-mediation line): no observational AR-LLM trace identifies the
+  counterfactual reference. Axis X$'$-blind is, to our knowledge, the first oracle in
+  this line that \emph{provably can fail} (a confounder collinear with the controls);
+  the paper claims only ``$\Rhat$ collapses on the planted X$'$-detectable and
+  X$'$-blind confounder classes,'' explicitly \emph{not} ``robust to all
+  confounding.'' We state the sharper concession plainly: the X$'$-blind regime
+  discharges A8 only on a \emph{synthetic} generator whose $\Rhat$ collapse
+  ($\text{transferred}=\tau_0(1-\xi)$) and whose control silence are \emph{hand-coded
+  identities}, so this ``provable failure regime'' is a correctness fixture (a unit
+  test promoted to a falsification), \emph{not} an adjudication of the real-data
+  causal question. On real AR-LLM traces A8 remains non-identifiable; the oracle
+  bounds the \emph{method's} behaviour under a known confounder, it does not certify
+  A8 holds in the wild. A skeptical reviewer may decline to credit A8, and we do not
+  claim the oracle removes it --- but declining A8 withdraws only the conditional
+  causal reading, not the certificate.
+  \item \textbf{Both the certificate and its conditional causal reading are
+  unfalsifiable at Stage-1 (no data yet).} Every empirical slot is
+  \textsc{data\_needed} and \texttt{server.authorized} is \texttt{false}, so this
+  submission asks acceptance of the \emph{certification protocol} and its closed-form
+  identities over synthetic fixtures, not of a certified result --- and \emph{a
+  fortiori} not of the secondary, conditional causal reading the certificate may later
+  license. What is falsifiable \emph{now} is the machinery (the green do-not-run
+  harness); the certificate is falsifiable only after the authorized run, and the
+  conditional causal reading only further, under A5--A9. We state this as an accepted
+  acceptance risk, not a resolved one.
   \item \textbf{Survival is conditional on Registered-Report framing --- a scoping
   survival, not a strength survival.} This submission pre-concedes every prong of the
   obvious ``it only measures a self-defined contrast / has no empirical separation from
@@ -1377,22 +1517,28 @@ We carry the design's caveats forward honestly.
 %==============================================================================
 
 We have replaced ``honest measurement of a self-defined contrast'' with a
-\emph{certification}: a trace segment is repair-transfer-certified for a
-hallucination class when a training-free, source-derived localized repair
-\emph{policy} recovers held-out in-class targets beyond a matched-null repair. The
-cross-example statistic $\Rhat$ is the headline; the within-example matched-null
-necessity statistic $\Uhat$ is the screening filter beneath it. We name the
-source$\to$target transport map and the five assumptions (A5--A9) under which $\Rhat$
-is an identified causal estimand, prove an identification lemma that separates the
-assumption-free matched-null subtraction from the assumption-loaded causal
-interpretation, and make the inference \emph{valid for dependent pairs} (a within-class
+\emph{certification protocol}: a matched-null, selective-inference-correct
+certificate of intervention-transfer usefulness. A trace segment is
+repair-transfer-certified for a hallucination class when a training-free,
+source-derived localized repair \emph{policy} recovers held-out in-class targets
+beyond a matched-null repair and beats detector-selected localizations through the
+identical pipeline --- a falsifiable, multiplicity-correct guarantee detection
+alone cannot provide. The cross-example statistic $\Rhat$ is the headline; the
+within-example matched-null necessity statistic $\Uhat$ is the screening filter
+beneath it. We make the inference \emph{valid for dependent pairs} (a within-class
 U-statistic with a confirmatory two-way cluster bootstrap CI, corroborated by a
-class-block sign-flip diagnostic) and the verdicts \emph{selective-inference correct}
-(every data-adaptive choice is a paid-for selection event). The detector contrast is empirical, not rhetorical: a baseline panel
-runs detector-selected localizations through the identical repair pipeline, and our
-novelty is conditional on out-transferring them. An adversarial oracle includes a
+class-block sign-flip diagnostic) and the verdicts \emph{selective-inference
+correct} (every data-adaptive choice is a paid-for selection event). The detector
+contrast is empirical, not rhetorical: a baseline panel runs detector-selected
+localizations through the identical repair pipeline, and the certificate of novelty
+is conditional on out-transferring them. An adversarial graded oracle includes a
 \emph{provable} control-failure regime where $\Rhat$ must collapse or the method is
-declared unsound. The full analysis plan, hardened routing, and an exhibited,
+declared unsound. \emph{As a secondary, conditional application}, we name the
+source$\to$target transport map and the five assumptions (A5--A9) under which
+$\Rhat$ additionally admits a reading as an identified causal estimand, and prove
+an identification lemma that separates the assumption-free matched-null subtraction
+from the assumption-loaded causal interpretation; the protocol's value does
+\emph{not} depend on that causal reading holding. The full analysis plan, hardened routing, and an exhibited,
 re-checked feasible operating point are pre-registered; the preserved CIU machinery is
 implemented and frozen, and the v5 repair-transfer machinery is likewise
 \emph{implemented as do-not-run pure-Python}, covered by the green unit harness

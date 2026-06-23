@@ -7,6 +7,32 @@ project: tracecausal
 # Each adapted baseline carries a `segment_adaptation:` field stating how its native
 # signal is mapped to a per-segment score. Pre-registered; pin exact revision/hash
 # at run authorization.
+#
+# === v6 VERIFIED-REPO BASELINE CONTRACT (REDESIGN_v6 §3; ARIS v6) ============
+# The v6 redesign promotes Qwen2.5-7B-Instruct (+ Llama-3.1-8B-Instruct secondary)
+# as the matched headline model and LOCKS a >=8 OFFICIAL-REPO baseline suite
+# (2024-2026, all confirmed real official code) for a top-conference fair
+# comparison. Each verified-repo baseline carries `implementation_source:
+# official_repo`, an `official_repo:` URL, `venue:`, and a `role:` field. The
+# fairness contract (BASELINES.md "Fairness protocol"): every detector's NATIVE
+# signal is re-scored to a segment-level Û (`segment_adaptation:`) AND run through
+# the IDENTICAL repair pipeline (repair_ops) for G9-NOV, on the SAME matched model
+# (Qwen2.5-7B-Instruct), SAME datasets (TriviaQA/HotpotQA), SAME evaluator and
+# splits. Deciding gates: G1 (necessity, screening) + G9-NOV (repair-transfer).
+#
+# DETECTION vs LOCALIZATION distinction (v6, `comparator_class:` field):
+#   - `comparator_class: detection`    -> scored by AUROC/AUPRC/FPR@95TPR; these
+#       are output-/representation-/sampling-level hallucination detectors adapted
+#       to segment-level Û. They populate the screening (G1/G5') + detection tables.
+#   - `comparator_class: localization` -> token-attribution / mediation comparators
+#       (Captum Integrated Gradients, Causal Mediation Analysis). These produce a
+#       per-token/per-component importance map, NOT a detector score; our necessity
+#       certification competes with them MOST DIRECTLY (they are the closest
+#       attribution-localization neighbours). Scored on the segment-localization
+#       margin (G1 necessity / G6/G7 leakage), not AUROC.
+# `implementation_source: official_repo` requires the exact upstream commit be
+# pinned at run authorization (`implementation_commit: pending_before_server_run`)
+# and the license verified before any citation/run.
 segment_adaptation_policy: all_output_and_trace_detectors_rescored_to_segment_level_u_hat
 baselines:
   random_segment:
@@ -34,13 +60,17 @@ baselines:
     family: sampling_uncertainty
     required: true
     paper_url: https://www.nature.com/articles/s41586-024-07421-0
-    implementation_source: official_or_faithful_reimplementation_required
+    venue: Nature 2024 (ICLR 2023 origin)
+    official_repo: https://github.com/jlko/semantic_uncertainty
+    implementation_source: official_repo
     implementation_commit: pending_before_server_run
     license: verify_before_run
+    role: must_beat
+    comparator_class: detection           # AUROC; sampling-based output uncertainty
     tuning_grid: sample_budget_and_cluster_threshold_validation_only
     input_access: sampled_outputs
     fairness: same_split_same_examples_same_evaluator
-    segment_adaptation: per_segment_semantic_entropy_over_segment_conditioned_resamples
+    segment_adaptation: per_segment_semantic_entropy_over_segment_conditioned_resamples_then_identical_repair_pipeline_for_g9_nov
   output_signature_detector:
     family: learned_output_signature
     required: true
@@ -57,46 +87,74 @@ baselines:
     family: reasoning_trace
     required: true
     paper_url: https://arxiv.org/abs/2506.04832
-    implementation_source: official_or_faithful_reimplementation_required
+    venue: AAAI 2026
+    official_repo: https://github.com/bebr2/RACE
+    implementation_source: official_repo
     implementation_commit: pending_before_server_run
     license: verify_before_run
+    role: must_beat
+    comparator_class: detection           # AUROC; joint answer-reasoning consistency
     tuning_grid: validation_only_signal_weights
     input_access: reasoning_traces
     fairness: same_split_same_examples_same_evaluator
-    segment_adaptation: race_consistency_signal_computed_per_reasoning_segment
+    segment_adaptation: race_answer_reasoning_consistency_signal_computed_per_reasoning_segment_then_identical_repair_pipeline_for_g9_nov
   diffusion_trace_detector:
     display_name: TraceDet
     family: diffusion_trace
     required: true
     paper_url: https://arxiv.org/abs/2510.01274
-    implementation_source: official_or_faithful_reimplementation_required
-    implementation_commit: pending_before_server_run
-    license: verify_before_run
-    tuning_grid: validation_only_subtrace_selection
+    venue: ICLR 2026
+    official_repo: none_public          # no public code release as of v6 lock
+    implementation_source: cited_reference_not_reproduced
+    implementation_commit: not_applicable_cited_reference
+    license: not_applicable_cited_reference
+    role: cited_reference_not_reproduced
+    comparator_class: cited_reference   # not a reproduced detector OR localizer in v6
+    tuning_grid: not_applicable_cited_reference
     input_access: diffusion_denoising_trace
-    fairness: same_split_same_examples_same_evaluator
-    segment_adaptation: subtrace_score_mapped_to_denoising_segment
+    fairness: not_reproduced_so_no_matched_comparison
+    segment_adaptation: not_reproduced   # the DIFFUSION DETECTOR is not run; see ar_span_adapter_role below
     paradigm_scope: diffusion_transfer_only
-    # The TraceDet DETECTOR (diffusion denoising-trace classifier) is excluded from the
-    # AR-lead R_hat table; it appears only in the diffusion transfer study. SEPARATELY,
-    # a TraceDet-DERIVED AR span-selection adapter (its IB sub-trace selection criterion
-    # re-cast onto AR-LLM traces, refinement 3) enters the AR-lead REPAIR PANEL as B1.
-    # These are two distinct artifacts; the detector is not imported cross-paradigm, the
-    # adapter is a span selector run through the identical repair_ops pipeline.
+    # === v6 ROLE CHANGE: TraceDet = CITED REFERENCE, NOT REPRODUCED ============
+    # The TraceDet DIFFUSION DETECTOR (denoising-trace IB classifier) is NOT
+    # reproduced as a baseline in v6. Reason (REDESIGN_v6 §3.4; ARIS v6 decision):
+    # (1) no public official code is released for TraceDet, and (2) it is a complex
+    # diffusion-LLM method on a different paradigm from our frozen AR-LLM lead.
+    # Reproducing it faithfully would require a from-scratch diffusion re-implementation
+    # (a faithful-reimplementation, which the v6 verified-repo contract explicitly
+    # bars from the headline >=8 OFFICIAL-REPO suite). We therefore DIFFERENTIATE
+    # from TraceDet in related work rather than reproduce it: it remains the SHARPEST
+    # related-work neighbour we cite + position against (the "causal beats
+    # correlational" rebuttal we must cash in empirically vs the REPRODUCED suite),
+    # NOT a reproduced baseline. It is absent from BOTH the AR-lead R_hat table AND
+    # the diffusion transfer table as a run detector.
+    #
+    # SEPARATELY AND DISTINCT: a TraceDet-DERIVED AR span-selection ADAPTER (its IB
+    # sub-trace selection CRITERION re-cast onto AR-LLM traces, refinement 3) DOES
+    # enter the AR-lead REPAIR PANEL as B1. This is OUR training-free re-cast of a
+    # published selection criterion onto AR spans (no diffusion code, no TraceDet
+    # weights), run through the identical repair_ops pipeline for G9-NOV fairness.
+    # The detector is cited-not-reproduced; the adapter is our own span selector.
     detector_ar_lead_inclusion: excluded_from_ar_lead_table
+    detector_diffusion_transfer_inclusion: cited_not_reproduced_absent_from_transfer_table
     ar_span_adapter_role: B1_in_ar_lead_repair_panel   # repair_ops.tracedet_ar_span_adapter (refinement 3)
     ar_span_adapter_selector: tracecausal.repair_ops.tracedet_ar_span_adapter
-    ar_lead_exclusion_justification: >-
-      The TraceDet DETECTOR operates on diffusion denoising traces; the frozen lead
-      paradigm is AR-LLM (Qwen2.5-7B-Instruct + Llama-3.1-8B-Instruct), so the detector
-      is retained ONLY in the diffusion transfer study, never imported as a detector
-      into the AR-lead table (baseline_contract.md forbids cross-paradigm detector
-      import without a separate paradigm label). What enters the AR-lead repair panel is
-      NOT the diffusion detector but a TraceDet-derived AR span-selection adapter
-      (B1): its information-bottleneck sub-trace selection criterion re-cast as an AR
-      localization selector and fed through the identical repair_ops pipeline. This is
-      the single, consistent AR-lead role for TraceDet (cf. paper Sec. Related / B1).
-      Pre-registered; pin revision at run authorization.
+    ar_span_adapter_is_reproduced: true   # OUR re-cast span selector (not TraceDet code)
+    cited_reference_justification: >-
+      TraceDet (ICLR 2026, arXiv 2510.01274) has NO public official code and is a
+      complex diffusion-LLM method on a paradigm distinct from our frozen AR-LLM
+      lead (Qwen2.5-7B-Instruct + Llama-3.1-8B-Instruct). Per the v6 verified-repo
+      contract (REDESIGN_v6 §3), the headline baseline suite admits only confirmed
+      OFFICIAL-REPO methods; a from-scratch diffusion re-implementation is barred
+      from that suite. TraceDet is therefore CITED and POSITIONED AGAINST as the
+      sharpest related-work neighbour (paper Sec. Related), NOT reproduced as a
+      detector baseline. What enters the AR-lead repair panel is NOT the diffusion
+      detector but a TraceDet-DERIVED AR span-selection adapter (B1): its
+      information-bottleneck sub-trace selection criterion re-cast as a training-free
+      AR localization selector and fed through the identical repair_ops pipeline
+      (our own code, no diffusion weights). The detector is cited-not-reproduced;
+      the B1 adapter is our re-cast span selector. Pre-registered; pin revision at
+      run authorization.
   tdgnet_trace_detector:
     display_name: TDGNet
     family: diffusion_trace
@@ -111,32 +169,190 @@ baselines:
     segment_adaptation: graph_node_scores_aggregated_to_trace_segment
     paradigm_scope: diffusion_transfer_only
     ar_lead_inclusion: excluded_from_ar_lead_table
+    v6_suite_membership: not_in_verified_repo_headline_suite   # diffusion-transfer-only; not one of the >=8 AR-lead official-repo baselines
     ar_lead_exclusion_justification: >-
       TDGNet is a graph-style diffusion-trace detector; same paradigm scoping as
       TraceDet. Segment-adapted baseline in the diffusion transfer study only,
-      excluded from the AR-lead table. Pre-registered; pin revision at run
+      excluded from the AR-lead table and from the v6 verified-repo headline suite
+      (which is AR-lead, on Qwen2.5-7B-Instruct). Pre-registered; pin revision at run
       authorization.
   selfcheckgpt:
     display_name: SelfCheckGPT
     family: sampling_consistency
     required: true
     paper_url: https://arxiv.org/abs/2303.08896
-    implementation_source: official_or_faithful_reimplementation_required
+    venue: EMNLP 2023
+    official_repo: https://github.com/potsawee/selfcheckgpt
+    implementation_source: official_repo
     implementation_commit: pending_before_server_run
     license: verify_before_run
+    role: must_beat
+    comparator_class: detection           # AUROC; black-box sampling consistency
     tuning_grid: validation_only_nli_threshold
     input_access: sampled_outputs
     fairness: same_split_same_examples_same_evaluator
-    segment_adaptation: nli_consistency_score_computed_over_segment_aligned_resamples
+    segment_adaptation: nli_consistency_score_computed_over_segment_aligned_resamples_then_identical_repair_pipeline_for_g9_nov
   inside_detector:
-    display_name: INSIDE
+    display_name: INSIDE / EigenScore
     family: internal_state_uncertainty
     required: true
     paper_url: https://arxiv.org/abs/2402.03744
-    implementation_source: official_or_faithful_reimplementation_required
+    venue: ICLR 2024
+    official_repo: https://github.com/D2I-ai/eigenscore
+    implementation_source: official_repo
     implementation_commit: pending_before_server_run
     license: verify_before_run
+    role: must_beat
+    comparator_class: detection           # AUROC; internal-state covariance eigenscore
     tuning_grid: validation_only_internal_signal_threshold
     input_access: hidden_states_if_available
     fairness: same_split_same_examples_same_evaluator
-    segment_adaptation: internal_eigenscore_computed_over_segment_localized_hidden_states
+    segment_adaptation: internal_eigenscore_computed_over_segment_localized_hidden_states_then_identical_repair_pipeline_for_g9_nov
+
+  # === v6 ADDED VERIFIED-REPO BASELINES (all confirmed real official code) =====
+  # The following entries complete the LOCKED >=8 OFFICIAL-REPO baseline suite
+  # (REDESIGN_v6 §3). semantic_entropy / selfcheckgpt / inside_detector(INSIDE) /
+  # reasoning_consistency_detector(RACE) above are also part of the suite (merged,
+  # not duplicated). All run on the matched headline model Qwen2.5-7B-Instruct, on
+  # TriviaQA + HotpotQA, with native signal re-scored to segment-level Û and the
+  # IDENTICAL repair pipeline for G9-NOV. DETECTION comparators are AUROC-scored;
+  # the two LOCALIZATION comparators (captum_integrated_gradients,
+  # causal_mediation_analysis) are the attribution neighbours our necessity
+  # certification competes with most directly (G1 / G6 / G7), NOT AUROC.
+  redeep_detector:
+    display_name: ReDeEP
+    family: internal_knowledge_regression
+    required: true
+    paper_url: https://github.com/Jeryi-Sun/ReDEeP-ICLR
+    venue: ICLR 2025
+    official_repo: https://github.com/Jeryi-Sun/ReDEeP-ICLR
+    implementation_source: official_repo
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    role: must_beat
+    comparator_class: detection           # AUROC; regressing decoupled external/parametric knowledge
+    tuning_grid: validation_only_regression_and_layer_head_selection
+    input_access: hidden_states_and_attention
+    fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: decoupled_external_parametric_knowledge_score_localized_to_segment_layers_heads_then_identical_repair_pipeline_for_g9_nov
+  lapeigvals_detector:
+    display_name: LapEigvals
+    family: attention_spectral
+    required: true
+    paper_url: https://github.com/graphml-lab-pwr/lapeigvals
+    venue: EMNLP 2025
+    official_repo: https://github.com/graphml-lab-pwr/lapeigvals
+    implementation_source: official_repo
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    role: must_beat
+    comparator_class: detection           # AUROC; spectral (Laplacian eigenvalue) features of attention maps
+    tuning_grid: validation_only_spectral_feature_and_head_selection
+    input_access: attention_maps
+    fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: laplacian_eigenvalue_attention_features_computed_over_segment_restricted_attention_submatrix_then_identical_repair_pipeline_for_g9_nov
+  haloscope_detector:
+    display_name: HaloScope
+    family: unlabeled_generation_membership
+    required: true
+    paper_url: https://github.com/deeplearning-wisc/haloscope
+    venue: NeurIPS 2024 (spotlight)
+    official_repo: https://github.com/deeplearning-wisc/haloscope
+    implementation_source: official_repo
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    role: must_beat
+    comparator_class: detection           # AUROC; unlabeled-generation hallucination detection (membership estimation)
+    tuning_grid: validation_only_subspace_and_threshold
+    input_access: hidden_states_unlabeled_generations
+    fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: membership_subspace_score_localized_to_segment_hidden_states_then_identical_repair_pipeline_for_g9_nov
+  lookback_lens_detector:
+    display_name: Lookback-Lens
+    family: attention_context_ratio
+    required: true
+    paper_url: https://github.com/voidism/Lookback-Lens
+    venue: EMNLP 2024
+    official_repo: https://github.com/voidism/Lookback-Lens
+    implementation_source: official_repo
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    role: must_beat
+    comparator_class: detection           # AUROC; attention context-vs-generation ratio
+    tuning_grid: validation_only_ratio_feature_classifier
+    input_access: attention_maps
+    fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: lookback_context_vs_generation_attention_ratio_computed_per_segment_then_identical_repair_pipeline_for_g9_nov
+  mind_detector:
+    display_name: MIND
+    family: internal_state_realtime
+    required: true
+    paper_url: https://github.com/oneal2000/MIND
+    venue: ACL 2024 (Findings)
+    official_repo: https://github.com/oneal2000/MIND
+    implementation_source: official_repo
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    role: must_beat
+    comparator_class: detection           # AUROC; unsupervised internal-state real-time detection
+    tuning_grid: validation_only_internal_signal_threshold
+    input_access: hidden_states_realtime
+    fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: unsupervised_internal_state_signal_computed_over_segment_localized_hidden_states_then_identical_repair_pipeline_for_g9_nov
+  captum_integrated_gradients:
+    display_name: Captum Integrated Gradients
+    family: token_attribution
+    required: true
+    paper_url: https://github.com/meta-pytorch/captum
+    venue: attribution control (Sundararajan et al. 2017 IG; Captum library)
+    official_repo: https://github.com/meta-pytorch/captum
+    implementation_source: official_repo
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    role: control                          # attribution control; closest LOCALIZATION neighbour
+    comparator_class: localization         # token-attribution map, NOT a detector score; necessity-cert competes most directly here
+    scored_on: segment_localization_margin_not_auroc   # G1 necessity / G6-G7 leakage, not AUROC
+    tuning_grid: validation_only_baseline_and_step_count
+    input_access: gradients_and_embeddings
+    fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: integrated_gradient_token_attributions_aggregated_to_segment_importance_then_identical_repair_pipeline_for_g9_nov
+  causal_mediation_analysis:
+    display_name: Causal Mediation Analysis
+    family: indirect_effect_localization
+    required: true
+    paper_url: https://github.com/sebastianGehrmann/CausalMediationAnalysis
+    venue: NeurIPS 2020 (Vig et al.)
+    official_repo: https://github.com/sebastianGehrmann/CausalMediationAnalysis
+    implementation_source: official_repo
+    implementation_commit: pending_before_server_run
+    license: verify_before_run
+    role: control                          # attribution/mediation control; closest LOCALIZATION neighbour
+    comparator_class: localization         # indirect-effect map over components, NOT a detector score; necessity-cert competes most directly here
+    scored_on: segment_localization_margin_not_auroc   # G1 necessity / G6-G7 leakage, not AUROC
+    tuning_grid: validation_only_mediator_set_selection
+    input_access: hidden_states_and_attention
+    fairness: same_split_same_examples_same_evaluator
+    segment_adaptation: indirect_effect_localized_to_segment_components_then_identical_repair_pipeline_for_g9_nov
+
+# === v6 verified-repo suite roster (count + roles; quick reference) ===========
+# DETECTION comparators (AUROC) — must_beat:
+#   1 redeep_detector              ReDeEP            ICLR 2025
+#   2 reasoning_consistency_detector RACE            AAAI 2026
+#   3 lapeigvals_detector          LapEigvals        EMNLP 2025
+#   4 haloscope_detector           HaloScope         NeurIPS 2024 (spotlight)
+#   5 lookback_lens_detector       Lookback-Lens     EMNLP 2024
+#   6 mind_detector                MIND              ACL 2024 (Findings)
+#   7 inside_detector              INSIDE/EigenScore ICLR 2024
+#   8 semantic_entropy             Semantic Entropy  Nature 2024 / ICLR 2023
+#   9 selfcheckgpt                 SelfCheckGPT      EMNLP 2023
+# LOCALIZATION / attribution comparators (necessity-cert competes most directly) — control:
+#  10 captum_integrated_gradients  Captum IG         attribution control
+#  11 causal_mediation_analysis    Causal Mediation  NeurIPS 2020
+# => 9 DETECTION (must_beat) + 2 LOCALIZATION (control) = 11 verified-repo baselines,
+#    clearing the >=8 OFFICIAL-REPO contract (REDESIGN_v6 §3). Plus the local sanity
+#    baselines (random_segment, output_entropy) and the diffusion-transfer-only
+#    detectors (tdgnet) that are NOT part of the AR-lead verified-repo suite.
+# CITED REFERENCE, NOT REPRODUCED: TraceDet (diffusion_trace_detector above) —
+#    role: cited_reference_not_reproduced (no public code + complex diffusion method);
+#    differentiated-from, not reproduced. Its IB selection criterion re-cast as the
+#    B1 AR span adapter is OUR code (repair_ops.tracedet_ar_span_adapter), distinct.

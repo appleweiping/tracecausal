@@ -68,6 +68,18 @@ def build_parser():
     p.add_argument("--operator-freeze")
     p.add_argument("--nullpool")
     p.add_argument("--transport-variant", default="C")
+    # proxy-robustness ablation hook (REDESIGN_v5 §8a): selects the claim-span
+    # construction rule. DEFAULT ``salience_grid`` is the registered behavior and is
+    # byte-identical to the pre-hook path; the other three are the pre-registered
+    # alternative segmentations the ablation sweeps. Diagnostic/secondary (not in the
+    # confirmatory Holm family); the run itself stays do-not-run-gated as before.
+    p.add_argument(
+        "--claim-span-variant",
+        default="salience_grid",
+        choices=("salience_grid", "sentence", "stride_half", "salience_threshold"),
+        help="claim-span segmentation rule for the §8a proxy-robustness ablation; "
+             "default salience_grid (behavior unchanged)",
+    )
     p.add_argument("--taxonomy-hash")
     p.add_argument("--r-null", default="DATA_NEEDED_PIN_AT_LOCK",
                    help="matched-null repair draws; pinned at lock to the sigma_MC floor")
